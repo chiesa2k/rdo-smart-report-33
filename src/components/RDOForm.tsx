@@ -237,20 +237,37 @@ export const RDOForm = () => {
         currentY += serviceReportData.height;
       }
       
-      // Verificar se há espaço para assinaturas na página atual
-      const spaceNeededForSignature = signatureHeight + 10; // 10mm de margem extra
-      if (currentY + spaceNeededForSignature > headerHeight + availableContentHeight) {
-        // Criar nova página apenas para assinaturas
+      // Calcular espaço disponível na página atual
+      const spaceAvailableForSignature = headerHeight + availableContentHeight - currentY;
+      const spaceNeededForSignature = signatureHeight + 5; // 5mm de margem mínima
+      
+      // Se há espaço suficiente na página atual, colocar as assinaturas lá
+      if (spaceAvailableForSignature >= spaceNeededForSignature) {
+        // Posicionar assinaturas aproveitando o espaço disponível
+        // Deixar uma pequena margem do conteúdo anterior
+        const signatureY = Math.max(currentY + 5, pageHeight - footerHeight - signatureHeight - 5);
+        pdf.addImage(signatureImgData, 'PNG', marginLeft, signatureY, contentWidth, signatureHeight);
+      } else {
+        // Se não há espaço suficiente, criar nova página para assinaturas
         pdf.addPage();
         currentPage++;
         pdf.addImage(headerImgData, 'PNG', 0, 0, pageWidth, headerHeight);
         pdf.addImage(footerImgData, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight);
-        currentY = headerHeight;
+        
+        // Posicionar assinaturas na nova página, aproveitando o máximo de espaço
+        // Colocar logo após o cabeçalho se houver muito espaço, ou na parte inferior se preferível
+        const newPageAvailableSpace = availableContentHeight;
+        let signatureY;
+        
+        if (newPageAvailableSpace > signatureHeight + 50) { // Se há muito espaço (>50mm), posicionar após cabeçalho
+          signatureY = headerHeight + 10; // 10mm após o cabeçalho
+        } else {
+          // Caso contrário, posicionar na parte inferior da página
+          signatureY = pageHeight - footerHeight - signatureHeight - 5;
+        }
+        
+        pdf.addImage(signatureImgData, 'PNG', marginLeft, signatureY, contentWidth, signatureHeight);
       }
-      
-      // Posicionar assinaturas na parte inferior da última página, acima do rodapé
-      const signatureY = pageHeight - footerHeight - signatureHeight;
-      pdf.addImage(signatureImgData, 'PNG', marginLeft, signatureY, contentWidth, signatureHeight);
         
       pdf.save(`RDO_${formData.reportNumber || 'novo'}.pdf`);
       toast.success("PDF gerado com sucesso!");

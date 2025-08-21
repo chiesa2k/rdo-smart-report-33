@@ -1268,11 +1268,12 @@ export const RDOForm = () => {
           </table>
         </div>
 
-        {/* Signatures Section (apenas na última página) */}
+        {/* Signatures Section */}
         <div id="rdo-signatures" style={{ 
           lineHeight: '1.2', 
           fontSize: '10px',
-          padding: '0 15mm'
+          padding: '0 15mm',
+          marginTop: '0px'
         }}>
           <table style={{ 
             width: '100%', 

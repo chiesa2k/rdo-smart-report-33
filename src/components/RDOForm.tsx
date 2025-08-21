@@ -527,12 +527,18 @@ export const RDOForm = () => {
                           alt={`Foto ${index + 1}`}
                           className="w-full h-32 object-cover rounded-lg border"
                         />
+                        <div className="absolute top-2 left-2 bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
+                          {index + 1}
+                        </div>
                         <button
                           onClick={() => removePhoto(index)}
                           className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
                         >
                           ×
                         </button>
+                        <p className="text-xs text-center mt-1 font-medium">
+                          Foto {index + 1}
+                        </p>
                       </div>
                     ))}
                   </div>

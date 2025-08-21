@@ -679,49 +679,53 @@ export const RDOForm = () => {
             <tr>
               <td style={{ 
                 border: '1px solid #333', 
-                padding: '6px 2px', 
+                padding: '8px 4px', 
                 backgroundColor: '#A6C8E0', 
                 fontWeight: 'bold', 
-                fontSize: '8px',
+                fontSize: '9px',
                 textAlign: 'center',
                 verticalAlign: 'middle',
-                height: '20px'
+                height: '25px',
+                lineHeight: '1.2'
               }}>
                 Relatório Diário / Daily Report Nº
               </td>
               <td style={{ 
                 border: '1px solid #333', 
-                padding: '6px 2px', 
+                padding: '8px 4px', 
                 backgroundColor: '#A6C8E0', 
                 fontWeight: 'bold', 
-                fontSize: '8px',
+                fontSize: '9px',
                 textAlign: 'center',
                 verticalAlign: 'middle',
-                height: '20px'
+                height: '25px',
+                lineHeight: '1.2'
               }}>
                 Data / Date
               </td>
               <td style={{ 
                 border: '1px solid #333', 
-                padding: '6px 2px', 
+                padding: '8px 4px', 
                 backgroundColor: '#A6C8E0', 
                 fontWeight: 'bold', 
-                fontSize: '8px',
+                fontSize: '9px',
                 textAlign: 'center',
                 verticalAlign: 'middle',
-                height: '20px'
+                height: '25px',
+                lineHeight: '1.2'
               }}>
                 Ordem de Serviço Nº / Service Number
               </td>
               <td style={{ 
                 border: '1px solid #333', 
-                padding: '6px 2px', 
+                padding: '8px 4px', 
                 backgroundColor: '#A6C8E0', 
                 fontWeight: 'bold', 
-                fontSize: '8px',
+                fontSize: '9px',
                 textAlign: 'center',
                 verticalAlign: 'middle',
-                height: '20px'
+                height: '25px',
+                lineHeight: '1.2'
               }}>
                 Horário de Atendimento / Time of Attendance
               </td>
@@ -729,41 +733,45 @@ export const RDOForm = () => {
             <tr>
               <td style={{ 
                 border: '1px solid #333', 
-                padding: '6px 2px', 
-                fontSize: '10px', 
-                height: '25px',
+                padding: '8px 4px', 
+                fontSize: '11px', 
+                height: '30px',
                 verticalAlign: 'middle',
-                textAlign: 'center'
+                textAlign: 'center',
+                lineHeight: '1.2'
               }}>
                 {formData.reportNumber || '0001'}
               </td>
               <td style={{ 
                 border: '1px solid #333', 
-                padding: '6px 2px', 
-                fontSize: '10px', 
-                height: '25px',
+                padding: '8px 4px', 
+                fontSize: '11px', 
+                height: '30px',
                 verticalAlign: 'middle',
-                textAlign: 'center'
+                textAlign: 'center',
+                lineHeight: '1.2'
               }}>
                 {formData.date || ''}
               </td>
               <td style={{ 
                 border: '1px solid #333', 
-                padding: '6px 2px', 
-                fontSize: '10px', 
-                height: '25px',
+                padding: '8px 4px', 
+                fontSize: '11px', 
+                height: '30px',
                 verticalAlign: 'middle',
-                textAlign: 'center'
+                textAlign: 'center',
+                lineHeight: '1.2'
               }}>
                 {formData.serviceOrderNumber || ''}
               </td>
               <td style={{ 
                 border: '1px solid #333', 
-                padding: '6px 2px', 
-                fontSize: '10px', 
-                height: '25px',
+                padding: '8px 4px', 
+                fontSize: '11px', 
+                height: '30px',
                 verticalAlign: 'middle',
-                textAlign: 'center'
+                textAlign: 'center',
+                lineHeight: '1.2'
               }}>
                 {formData.attendanceTime || 'De / From: _____ Até / To: _____'}
               </td>
@@ -830,11 +838,12 @@ export const RDOForm = () => {
             <tr>
               <td style={{ 
                 border: '1px solid #333', 
-                padding: '6px 2px', 
-                fontSize: '10px', 
-                height: '25px',
+                padding: '8px 4px', 
+                fontSize: '11px', 
+                height: '30px',
                 verticalAlign: 'middle',
-                textAlign: 'center'
+                textAlign: 'center',
+                lineHeight: '1.2'
               }}>
                 {formData.customer || ''}
               </td>
@@ -1226,8 +1235,8 @@ export const RDOForm = () => {
             <tr>
                <td style={{ 
                  border: '1px solid #333', 
-                 padding: '4px', 
-                 fontSize: '10px', 
+                 padding: '8px', 
+                 fontSize: '11px', 
                  minHeight: '250px',
                  verticalAlign: 'top',
                  textAlign: 'left'

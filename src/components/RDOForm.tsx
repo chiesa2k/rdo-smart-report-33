@@ -1270,7 +1270,7 @@ export const RDOForm = () => {
 
         {/* Signatures Section */}
         <div id="rdo-signatures" style={{ 
-          lineHeight: '1.2', 
+          lineHeight: '1.0', 
           fontSize: '10px',
           padding: '0 15mm',
           marginTop: '0px'
@@ -1284,37 +1284,40 @@ export const RDOForm = () => {
             <tr>
               <td style={{ 
                 border: '1px solid #333', 
-                padding: '6px 2px', 
+                padding: '4px 2px', 
                 fontWeight: 'bold', 
                 fontSize: '8px',
                 textAlign: 'center',
                 verticalAlign: 'middle',
                 width: '33.33%',
-                height: '20px'
+                height: '18px',
+                lineHeight: '1.0'
               }}>
                 Local e Data / Location and Date
               </td>
               <td style={{ 
                 border: '1px solid #333', 
-                padding: '6px 2px', 
+                padding: '4px 2px', 
                 fontWeight: 'bold', 
                 fontSize: '8px',
                 textAlign: 'center',
                 verticalAlign: 'middle',
                 width: '33.33%',
-                height: '20px'
+                height: '18px',
+                lineHeight: '1.0'
               }}>
                 Assinatura do Técnico Responsável / Technician's Signature
               </td>
               <td style={{ 
                 border: '1px solid #333', 
-                padding: '6px 2px', 
+                padding: '4px 2px', 
                 fontWeight: 'bold', 
                 fontSize: '8px',
                 textAlign: 'center',
                 verticalAlign: 'middle',
                 width: '33.33%',
-                height: '20px'
+                height: '18px',
+                lineHeight: '1.0'
               }}>
                 Serviço Concluído à Satisfação / Service Concluded Accordingly
               </td>
@@ -1322,31 +1325,34 @@ export const RDOForm = () => {
             <tr>
               <td style={{ 
                 border: '1px solid #333', 
-                padding: '8px', 
+                padding: '6px', 
                 fontSize: '10px', 
-                height: '40px',
+                height: '35px',
                 verticalAlign: 'middle',
-                textAlign: 'center'
+                textAlign: 'center',
+                lineHeight: '1.0'
               }}>
                 {formData.finalLocation || ''}
               </td>
               <td style={{ 
                 border: '1px solid #333', 
-                padding: '8px', 
+                padding: '6px', 
                 fontSize: '10px', 
-                height: '40px',
+                height: '35px',
                 verticalAlign: 'middle',
-                textAlign: 'center'
+                textAlign: 'center',
+                lineHeight: '1.0'
               }}>
                 {formData.technicianSignature || ''}
               </td>
               <td style={{ 
                 border: '1px solid #333', 
-                padding: '8px', 
+                padding: '6px', 
                 fontSize: '10px', 
-                height: '40px',
+                height: '35px',
                 verticalAlign: 'middle',
-                textAlign: 'center'
+                textAlign: 'center',
+                lineHeight: '1.0'
               }}></td>
             </tr>
           </table>

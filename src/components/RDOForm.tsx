@@ -1074,7 +1074,9 @@ export const RDOForm = () => {
                 Assinatura / Signature
               </td>
             </tr>
-            {formData.teamMembers.map((member, index) => (
+            {formData.teamMembers
+              .filter(member => member.register || member.worker || member.position || member.signature)
+              .map((member, index) => (
               <tr key={index}>
                 <td style={{ 
                   border: '1px solid #333', 

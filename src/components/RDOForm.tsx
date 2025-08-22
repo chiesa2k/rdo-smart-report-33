@@ -89,10 +89,109 @@ export const RDOForm = () => {
 
   const [previewImages, setPreviewImages] = useState<string[]>([]);
   const [isListening, setIsListening] = useState(false);
+  const [isSummarizing, setIsSummarizing] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const summarizeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const summarizeText = async (text: string) => {
+    if (!text.trim() || text.length < 50) return text;
+    
+    setIsSummarizing(true);
+    try {
+      // Usando uma abordagem simples de organização local
+      // Divide o texto em frases e reorganiza de forma mais estruturada
+      const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 5);
+      
+      const topics = {
+        equipment: [] as string[],
+        problem: [] as string[],
+        solution: [] as string[],
+        general: [] as string[]
+      };
+      
+      // Palavras-chave para categorização
+      const equipmentKeywords = ['equipamento', 'motor', 'bomba', 'válvula', 'sistema', 'ar condicionado', 'refrigeração', 'compressor'];
+      const problemKeywords = ['problema', 'falha', 'erro', 'defeito', 'avaria', 'parou', 'quebrou', 'ruído'];
+      const solutionKeywords = ['conserto', 'reparo', 'substituição', 'ajuste', 'limpeza', 'manutenção', 'instalação'];
+      
+      sentences.forEach(sentence => {
+        const cleanSentence = sentence.trim();
+        if (!cleanSentence) return;
+        
+        const lowerSentence = cleanSentence.toLowerCase();
+        
+        if (equipmentKeywords.some(keyword => lowerSentence.includes(keyword))) {
+          topics.equipment.push(cleanSentence);
+        } else if (problemKeywords.some(keyword => lowerSentence.includes(keyword))) {
+          topics.problem.push(cleanSentence);
+        } else if (solutionKeywords.some(keyword => lowerSentence.includes(keyword))) {
+          topics.solution.push(cleanSentence);
+        } else {
+          topics.general.push(cleanSentence);
+        }
+      });
+      
+      // Monta o texto organizado
+      let organizedText = '';
+      
+      if (topics.equipment.length > 0) {
+        organizedText += '**EQUIPAMENTO/SISTEMA:**\n';
+        topics.equipment.forEach(item => {
+          organizedText += `• ${item.charAt(0).toUpperCase() + item.slice(1)}.\n`;
+        });
+        organizedText += '\n';
+      }
+      
+      if (topics.problem.length > 0) {
+        organizedText += '**PROBLEMA IDENTIFICADO:**\n';
+        topics.problem.forEach(item => {
+          organizedText += `• ${item.charAt(0).toUpperCase() + item.slice(1)}.\n`;
+        });
+        organizedText += '\n';
+      }
+      
+      if (topics.solution.length > 0) {
+        organizedText += '**AÇÕES REALIZADAS:**\n';
+        topics.solution.forEach(item => {
+          organizedText += `• ${item.charAt(0).toUpperCase() + item.slice(1)}.\n`;
+        });
+        organizedText += '\n';
+      }
+      
+      if (topics.general.length > 0) {
+        organizedText += '**OBSERVAÇÕES GERAIS:**\n';
+        topics.general.forEach(item => {
+          organizedText += `• ${item.charAt(0).toUpperCase() + item.slice(1)}.\n`;
+        });
+      }
+      
+      return organizedText || text;
+      
+    } catch (error) {
+      console.error('Erro ao sumarizar texto:', error);
+      return text;
+    } finally {
+      setIsSummarizing(false);
+    }
+  };
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Se o campo for serviceReport, programar sumarização após 3 segundos de inatividade
+    if (field === 'serviceReport' && value.length > 50) {
+      if (summarizeTimeoutRef.current) {
+        clearTimeout(summarizeTimeoutRef.current);
+      }
+      
+      summarizeTimeoutRef.current = setTimeout(async () => {
+        const summarized = await summarizeText(value);
+        if (summarized !== value) {
+          setFormData(prev => ({ ...prev, serviceReport: summarized }));
+          toast.success("Texto organizado automaticamente");
+        }
+      }, 3000);
+    }
   };
 
   const handleTeamMemberChange = (index: number, field: string, value: string) => {
@@ -155,10 +254,22 @@ export const RDOForm = () => {
       }
 
       if (finalTranscript) {
+        const newText = formData.serviceReport + (formData.serviceReport ? ' ' : '') + finalTranscript;
         setFormData(prev => ({
           ...prev,
-          serviceReport: prev.serviceReport + (prev.serviceReport ? ' ' : '') + finalTranscript
+          serviceReport: newText
         }));
+        
+        // Sumarizar após fala ser finalizada
+        if (newText.length > 50) {
+          setTimeout(async () => {
+            const summarized = await summarizeText(newText);
+            if (summarized !== newText) {
+              setFormData(prev => ({ ...prev, serviceReport: summarized }));
+              toast.success("Texto da fala organizado automaticamente");
+            }
+          }, 1000);
+        }
       }
     };
 
@@ -592,16 +703,37 @@ export const RDOForm = () => {
                       Falar
                     </>
                   )}
-                </Button>
-              </div>
-              <Textarea
-                id="serviceReport"
-                value={formData.serviceReport}
-                onChange={(e) => handleInputChange("serviceReport", e.target.value)}
-                placeholder="Descreva o trabalho executado, problemas encontrados, soluções aplicadas... Ou clique em 'Falar' para usar o reconhecimento de voz."
-                rows={6}
-                className="mt-2"
-              />
+                 </Button>
+                 <Button
+                   type="button"
+                   onClick={async () => {
+                     if (formData.serviceReport.trim()) {
+                       const summarized = await summarizeText(formData.serviceReport);
+                       if (summarized !== formData.serviceReport) {
+                         setFormData(prev => ({ ...prev, serviceReport: summarized }));
+                         toast.success("Texto reorganizado com sucesso");
+                       } else {
+                         toast.info("Texto já está bem organizado");
+                       }
+                     }
+                   }}
+                   variant="outline"
+                   size="sm"
+                   disabled={isSummarizing || !formData.serviceReport.trim()}
+                   className="flex items-center gap-2"
+                 >
+                   <FileText className="h-4 w-4" />
+                   {isSummarizing ? "Organizando..." : "Organizar"}
+                 </Button>
+               </div>
+               <Textarea
+                 id="serviceReport"
+                 value={formData.serviceReport}
+                 onChange={(e) => handleInputChange("serviceReport", e.target.value)}
+                 placeholder="Descreva o trabalho executado, problemas encontrados, soluções aplicadas... Ou clique em 'Falar' para usar o reconhecimento de voz."
+                 rows={6}
+                 className="mt-2"
+               />
             </div>
 
             {/* Photo Upload */}

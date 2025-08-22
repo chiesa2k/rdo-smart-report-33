@@ -1,11 +1,40 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Camera, Download, FileText, Upload, Plus, Trash2 } from "lucide-react";
+import { Camera, Download, FileText, Upload, Plus, Trash2, Mic, MicOff } from "lucide-react";
 import { toast } from "sonner";
+
+// Declarações de tipos para Web Speech API
+declare global {
+  interface Window {
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
+  }
+}
+
+interface SpeechRecognitionEvent extends Event {
+  results: SpeechRecognitionResultList;
+  resultIndex: number;
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+}
+
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start(): void;
+  stop(): void;
+  onstart: (() => void) | null;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
+  onend: (() => void) | null;
+}
 
 interface RDOFormData {
   reportNumber: string;
@@ -59,6 +88,8 @@ export const RDOForm = () => {
   });
 
   const [previewImages, setPreviewImages] = useState<string[]>([]);
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -93,6 +124,64 @@ export const RDOForm = () => {
     }));
     setPreviewImages(prev => prev.filter((_, i) => i !== index));
     toast.success("Foto removida");
+  };
+
+  const startSpeechRecognition = () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      toast.error("Seu navegador não suporta reconhecimento de voz");
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'pt-BR';
+
+    recognition.onstart = () => {
+      setIsListening(true);
+      toast.success("Gravação iniciada. Fale agora...");
+    };
+
+    recognition.onresult = (event) => {
+      let finalTranscript = '';
+      
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript;
+        }
+      }
+
+      if (finalTranscript) {
+        setFormData(prev => ({
+          ...prev,
+          serviceReport: prev.serviceReport + (prev.serviceReport ? ' ' : '') + finalTranscript
+        }));
+      }
+    };
+
+    recognition.onerror = (event) => {
+      console.error('Speech recognition error:', event.error);
+      setIsListening(false);
+      toast.error("Erro no reconhecimento de voz");
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+      toast.success("Gravação finalizada");
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+  };
+
+  const stopSpeechRecognition = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    }
   };
 
   const generatePDF = async () => {
@@ -481,14 +570,35 @@ export const RDOForm = () => {
 
             {/* Service Report */}
             <div>
-              <Label htmlFor="serviceReport" className="text-lg font-semibold">
-                Relatório de Serviço / Service Report
-              </Label>
+              <div className="flex items-center justify-between mb-2">
+                <Label htmlFor="serviceReport" className="text-lg font-semibold">
+                  Relatório de Serviço / Service Report
+                </Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={isListening ? stopSpeechRecognition : startSpeechRecognition}
+                  className={`flex items-center gap-2 ${isListening ? 'bg-red-100 text-red-700 border-red-300' : ''}`}
+                >
+                  {isListening ? (
+                    <>
+                      <MicOff className="h-4 w-4" />
+                      Parar Gravação
+                    </>
+                  ) : (
+                    <>
+                      <Mic className="h-4 w-4" />
+                      Falar
+                    </>
+                  )}
+                </Button>
+              </div>
               <Textarea
                 id="serviceReport"
                 value={formData.serviceReport}
                 onChange={(e) => handleInputChange("serviceReport", e.target.value)}
-                placeholder="Descreva o trabalho executado, problemas encontrados, soluções aplicadas..."
+                placeholder="Descreva o trabalho executado, problemas encontrados, soluções aplicadas... Ou clique em 'Falar' para usar o reconhecimento de voz."
                 rows={6}
                 className="mt-2"
               />

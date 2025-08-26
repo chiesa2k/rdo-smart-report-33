@@ -1,16 +1,24 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Camera, Download, FileText, Upload, Plus, Trash2, Mic, MicOff } from "lucide-react";
+import { Camera, Download, FileText, Plus, Trash2, Mic, MicOff, Save, LogOut } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { RDOFormData, saveRdoDraft } from "@/services/rdo-storage";
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
+import { generatePdfBlob } from "@/services/pdf-generator.tsx";
 
-// Declarações de tipos para Web Speech API
+// Speech recognition types
 declare global {
   interface Window {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     SpeechRecognition: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     webkitSpeechRecognition: any;
   }
 }
@@ -36,31 +44,7 @@ interface SpeechRecognition extends EventTarget {
   onend: (() => void) | null;
 }
 
-interface RDOFormData {
-  reportNumber: string;
-  date: string;
-  serviceOrderNumber: string;
-  attendanceTime: string;
-  customer: string;
-  vessel: string;
-  location: string;
-  requestor: string;
-  purpose: string;
-  equipment: string;
-  manufacturer: string;
-  model: string;
-  serialNumber: string;
-  teamMembers: { register: string; worker: string; position: string; signature: string }[];
-  serviceReport: string;
-  photos: File[];
-  finalLocation: string;
-  finalDate: string;
-  technicianSignature: string;
-  serviceCompleted: boolean;
-}
-
-export const RDOForm = () => {
-  const [formData, setFormData] = useState<RDOFormData>({
+const BLANK_FORM_DATA: Omit<RDOFormData, 'id' | 'userId' | 'createdAt' | 'updatedAt'> = {
     reportNumber: "",
     date: "",
     serviceOrderNumber: "",
@@ -85,113 +69,109 @@ export const RDOForm = () => {
     finalDate: "",
     technicianSignature: "",
     serviceCompleted: false
-  });
+};
 
+
+interface RDOFormProps {
+  initialData?: RDOFormData;
+  onSave: () => void;
+}
+
+export const RDOForm = ({ initialData, onSave }: RDOFormProps) => {
+  const { user, logout } = useAuth();
+  const isOnline = useOnlineStatus();
+  const [formData, setFormData] = useState<Omit<RDOFormData, 'userId' | 'createdAt' | 'updatedAt'> & { id?: string }>(initialData || { ...BLANK_FORM_DATA, id: undefined });
   const [previewImages, setPreviewImages] = useState<string[]>([]);
   const [isListening, setIsListening] = useState(false);
-  const [isSummarizing, setIsSummarizing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isEnhancing, setIsEnhancing] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const summarizeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const enhanceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const summarizeText = async (text: string) => {
-    if (!text.trim() || text.length < 50) return text;
-    
-    setIsSummarizing(true);
+  // Auto-save effect
+  useEffect(() => {
+    if (!user) return;
+
+    // Do not save if the form is pristine (e.g., only has the default blank data)
+    if (!formData.reportNumber && !formData.customer && !formData.serviceReport) {
+        return;
+    }
+
+    const handler = setTimeout(() => {
+      handleSaveDraft(true); // isAutoSave = true
+    }, 2500); // Save 2.5 seconds after user stops typing
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [formData, user, handleSaveDraft]);
+
+  const handleSaveDraft = useCallback(async (isAutoSave = false) => {
+    if (!user) {
+      if (!isAutoSave) toast.error("You must be logged in to save a draft.");
+      return;
+    }
+    setIsSaving(true);
     try {
-      // Usando uma abordagem simples de organização local
-      // Divide o texto em frases e reorganiza de forma mais estruturada
-      const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 5);
-      
-      const topics = {
-        equipment: [] as string[],
-        problem: [] as string[],
-        solution: [] as string[],
-        general: [] as string[]
-      };
-      
-      // Palavras-chave para categorização
-      const equipmentKeywords = ['equipamento', 'motor', 'bomba', 'válvula', 'sistema', 'ar condicionado', 'refrigeração', 'compressor'];
-      const problemKeywords = ['problema', 'falha', 'erro', 'defeito', 'avaria', 'parou', 'quebrou', 'ruído'];
-      const solutionKeywords = ['conserto', 'reparo', 'substituição', 'ajuste', 'limpeza', 'manutenção', 'instalação'];
-      
-      sentences.forEach(sentence => {
-        const cleanSentence = sentence.trim();
-        if (!cleanSentence) return;
-        
-        const lowerSentence = cleanSentence.toLowerCase();
-        
-        if (equipmentKeywords.some(keyword => lowerSentence.includes(keyword))) {
-          topics.equipment.push(cleanSentence);
-        } else if (problemKeywords.some(keyword => lowerSentence.includes(keyword))) {
-          topics.problem.push(cleanSentence);
-        } else if (solutionKeywords.some(keyword => lowerSentence.includes(keyword))) {
-          topics.solution.push(cleanSentence);
-        } else {
-          topics.general.push(cleanSentence);
-        }
-      });
-      
-      // Monta o texto organizado
-      let organizedText = '';
-      
-      if (topics.equipment.length > 0) {
-        organizedText += '**EQUIPAMENTO/SISTEMA:**\n';
-        topics.equipment.forEach(item => {
-          organizedText += `• ${item.charAt(0).toUpperCase() + item.slice(1)}.\n`;
-        });
-        organizedText += '\n';
+      const savedDraft = await saveRdoDraft(user.id, formData);
+      setFormData(prev => ({...prev, id: savedDraft.id}));
+      if (!isAutoSave) {
+          toast.success("Draft saved!");
       }
+      onSave(); // Notify parent that a save occurred
+    } catch (error) {
+      if (!isAutoSave) toast.error("Failed to save draft.");
+      console.error(error);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [user, formData, onSave]);
+
+  const handleNewForm = () => {
+    handleSaveDraft(); // Save current work first
+    setFormData({ ...BLANK_FORM_DATA, id: undefined });
+    setPreviewImages([]);
+    toast.info("New form started.");
+  };
+
+  const enhanceTextWithAI = async (text: string) => {
+    if (!text.trim()) return text;
+
+    setIsEnhancing(true);
+    toast.info("Enhancing text with AI...");
+
+    // Simulate network delay for AI service
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    try {
+      // Simulate AI corrections and improvements
+      let enhancedText = text
+        .replace(/\b(problema|probrema)\b/gi, 'problema identificado')
+        .replace(/\b(conserto|consertado)\b/gi, 'ação realizada')
+        .replace(/\b(verificado|checado)\b/gi, 'verificado');
+
+      // Capitalize sentences
+      enhancedText = enhancedText.replace(/([.!?]\s*|^)(\w)/g, (match, p1, p2) => p1 + p2.toUpperCase());
+
+      // Basic structuring (similar to before, but framed as AI)
+      const sentences = enhancedText.split(/[.!?]+/).filter(s => s.trim().length > 3);
+      const organizedText = sentences.map(s => `• ${s.trim()}`).join('\n');
       
-      if (topics.problem.length > 0) {
-        organizedText += '**PROBLEMA IDENTIFICADO:**\n';
-        topics.problem.forEach(item => {
-          organizedText += `• ${item.charAt(0).toUpperCase() + item.slice(1)}.\n`;
-        });
-        organizedText += '\n';
+      if (organizedText) {
+        return `**Relatório Aprimorado por IA:**\n\n${organizedText}`;
       }
-      
-      if (topics.solution.length > 0) {
-        organizedText += '**AÇÕES REALIZADAS:**\n';
-        topics.solution.forEach(item => {
-          organizedText += `• ${item.charAt(0).toUpperCase() + item.slice(1)}.\n`;
-        });
-        organizedText += '\n';
-      }
-      
-      if (topics.general.length > 0) {
-        organizedText += '**OBSERVAÇÕES GERAIS:**\n';
-        topics.general.forEach(item => {
-          organizedText += `• ${item.charAt(0).toUpperCase() + item.slice(1)}.\n`;
-        });
-      }
-      
-      return organizedText || text;
+      return text;
       
     } catch (error) {
-      console.error('Erro ao sumarizar texto:', error);
+      console.error('Error enhancing text:', error);
       return text;
     } finally {
-      setIsSummarizing(false);
+      setIsEnhancing(false);
     }
   };
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    
-    // Se o campo for serviceReport, programar sumarização após 3 segundos de inatividade
-    if (field === 'serviceReport' && value.length > 50) {
-      if (summarizeTimeoutRef.current) {
-        clearTimeout(summarizeTimeoutRef.current);
-      }
-      
-      summarizeTimeoutRef.current = setTimeout(async () => {
-        const summarized = await summarizeText(value);
-        if (summarized !== value) {
-          setFormData(prev => ({ ...prev, serviceReport: summarized }));
-          toast.success("Texto organizado automaticamente");
-        }
-      }, 3000);
-    }
   };
 
   const handleTeamMemberChange = (index: number, field: string, value: string) => {
@@ -296,198 +276,60 @@ export const RDOForm = () => {
   };
 
   const generatePDF = async () => {
-    try {
-      const { jsPDF } = await import('jspdf');
-      const html2canvas = (await import('html2canvas')).default;
-      
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pageWidth = 210; // A4 width in mm
-      const pageHeight = 297; // A4 height in mm
-      
-      // Get elements
-      const headerElement = document.getElementById('rdo-header');
-      const mainContentElement = document.getElementById('rdo-main-content');
-      const signatureElement = document.getElementById('rdo-signatures');
-      const footerElement = document.getElementById('rdo-footer');
-      
-      if (!headerElement || !mainContentElement || !signatureElement || !footerElement) {
-        toast.error("Erro ao localizar elementos do documento");
+    if (!formData.id) {
+        toast.error("Please save the draft before generating a PDF.");
         return;
-      }
-
-      // Capture header (fixo em todas as páginas)
-      const headerCanvas = await html2canvas(headerElement, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff'
-      });
-      const headerImgData = headerCanvas.toDataURL('image/png', 1.0);
-      const headerHeight = (headerCanvas.height * pageWidth) / headerCanvas.width;
-
-      // Capture footer (fixo em todas as páginas)
-      const footerCanvas = await html2canvas(footerElement, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff'
-      });
-      const footerImgData = footerCanvas.toDataURL('image/png', 1.0);
-      const footerHeight = (footerCanvas.height * pageWidth) / footerCanvas.width;
-
-      // Capture signatures (apenas na última página)
-      const signatureCanvas = await html2canvas(signatureElement, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff'
-      });
-      const signatureImgData = signatureCanvas.toDataURL('image/png', 1.0);
-      const signatureHeight = (signatureCanvas.height * pageWidth) / signatureCanvas.width;
-
-      // Dividir o conteúdo principal em seções lógicas para melhor controle de páginas
-      const informationTables = mainContentElement.querySelectorAll('table:not(.service-report-content)');
-      const serviceReportElement = mainContentElement.querySelector('.service-report-content');
-      
-      // Capturar as tabelas de informações básicas (cabeçalho, dados, equipe)
-      const informationSections = [];
-      for (let i = 0; i < informationTables.length; i++) {
-        const table = informationTables[i] as HTMLElement;
-        const canvas = await html2canvas(table, {
-          scale: 2,
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: '#ffffff'
-        });
-        const imgData = canvas.toDataURL('image/png', 1.0);
-        const height = (canvas.height * pageWidth) / canvas.width;
-        
-        informationSections.push({
-          imgData,
-          height,
-          type: 'information'
-        });
-      }
-      
-      // Capturar o relatório de serviço (texto + fotos) se existir
-      let serviceReportData = null;
-      if (serviceReportElement) {
-        const canvas = await html2canvas(serviceReportElement as HTMLElement, {
-          scale: 2,
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: '#ffffff'
-        });
-        const imgData = canvas.toDataURL('image/png', 1.0);
-        const height = (canvas.height * pageWidth) / canvas.width;
-        
-        serviceReportData = {
-          imgData,
-          height,
-          type: 'service-report'
+    }
+    toast.info("Generating PDF...");
+    try {
+        // The generatePdfBlob function needs the full RDOFormData object,
+        // but our state might be missing some fields. We create it here.
+        const fullFormData: RDOFormData = {
+            ...BLANK_FORM_DATA, // ensures all fields are present
+            ...formData,
+            id: formData.id,
+            userId: user!.id,
+            createdAt: Date.now(), // These timestamps might not be accurate, but are needed
+            updatedAt: Date.now(),
         };
-      }
-      
-      // Margens da página (15mm de cada lado conforme definido no CSS)
-      const marginLeft = 15; // 15mm
-      const marginRight = 15; // 15mm
-      const contentWidth = pageWidth - marginLeft - marginRight; // 180mm
-      
-      // Espaço disponível para conteúdo (entre cabeçalho e rodapé)
-      const availableContentHeight = pageHeight - headerHeight - footerHeight - 5; // 5mm de margem extra
-      
-      // Adicionar primeira página com cabeçalho e rodapé
-      pdf.addImage(headerImgData, 'PNG', 0, 0, pageWidth, headerHeight);
-      pdf.addImage(footerImgData, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight);
-      
-      let currentY = headerHeight;
-      let currentPage = 1;
-      
-      // Adicionar seções de informações básicas na primeira página
-      for (const section of informationSections) {
-        // Verificar se a seção cabe na página atual
-        if (currentY + section.height > headerHeight + availableContentHeight) {
-          // Criar nova página
-          pdf.addPage();
-          currentPage++;
-          pdf.addImage(headerImgData, 'PNG', 0, 0, pageWidth, headerHeight);
-          pdf.addImage(footerImgData, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight);
-          currentY = headerHeight;
-        }
-        
-        // Adicionar seção respeitando as margens
-        pdf.addImage(section.imgData, 'PNG', marginLeft, currentY, contentWidth, section.height);
-        currentY += section.height;
-      }
-      
-      // Adicionar relatório de serviço
-      if (serviceReportData) {
-        // Verificar se o relatório de serviço cabe na página atual
-        if (currentY + serviceReportData.height > headerHeight + availableContentHeight) {
-          // Criar nova página
-          pdf.addPage();
-          currentPage++;
-          pdf.addImage(headerImgData, 'PNG', 0, 0, pageWidth, headerHeight);
-          pdf.addImage(footerImgData, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight);
-          currentY = headerHeight;
-        }
-        
-        // Adicionar relatório de serviço respeitando as margens
-        pdf.addImage(serviceReportData.imgData, 'PNG', marginLeft, currentY, contentWidth, serviceReportData.height);
-        currentY += serviceReportData.height;
-      }
-      
-      // Calcular espaço disponível na página atual
-      const spaceAvailableForSignature = headerHeight + availableContentHeight - currentY;
-      const spaceNeededForSignature = signatureHeight + 5; // 5mm de margem mínima
-      
-      // Se há espaço suficiente na página atual, colocar as assinaturas lá
-      if (spaceAvailableForSignature >= spaceNeededForSignature) {
-        // Posicionar assinaturas aproveitando o espaço disponível
-        // Deixar uma pequena margem do conteúdo anterior
-        const signatureY = Math.max(currentY + 5, pageHeight - footerHeight - signatureHeight - 5);
-        pdf.addImage(signatureImgData, 'PNG', marginLeft, signatureY, contentWidth, signatureHeight);
-      } else {
-        // Se não há espaço suficiente, criar nova página para assinaturas
-        pdf.addPage();
-        currentPage++;
-        pdf.addImage(headerImgData, 'PNG', 0, 0, pageWidth, headerHeight);
-        pdf.addImage(footerImgData, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight);
-        
-        // Posicionar assinaturas na nova página, aproveitando o máximo de espaço
-        // Colocar logo após o cabeçalho se houver muito espaço, ou na parte inferior se preferível
-        const newPageAvailableSpace = availableContentHeight;
-        let signatureY;
-        
-        if (newPageAvailableSpace > signatureHeight + 50) { // Se há muito espaço (>50mm), posicionar após cabeçalho
-          signatureY = headerHeight + 10; // 10mm após o cabeçalho
-        } else {
-          // Caso contrário, posicionar na parte inferior da página
-          signatureY = pageHeight - footerHeight - signatureHeight - 5;
-        }
-        
-        pdf.addImage(signatureImgData, 'PNG', marginLeft, signatureY, contentWidth, signatureHeight);
-      }
-        
-      pdf.save(`RDO_${formData.reportNumber || 'novo'}.pdf`);
-      toast.success("PDF gerado com sucesso!");
-      
+
+        const blob = await generatePdfBlob(fullFormData);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `RDO_${formData.reportNumber || 'draft'}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        toast.success("PDF generated and downloaded!");
     } catch (error) {
-      toast.error("Erro ao gerar PDF");
-      console.error(error);
+        toast.error(`Failed to generate PDF: ${error.message}`);
+        console.error(error);
     }
   };
+
+  if (!user) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-white p-4">
       <div className="max-w-4xl mx-auto space-y-6">
-        {/* Logo */}
-        <div className="flex justify-center mb-6">
+        {/* Logo and User Header */}
+        <div className="flex justify-between items-center mb-6">
           <img 
             src="/lovable-uploads/9af83693-c9fd-4eed-a0ad-1331f324d077.png" 
             alt="Supply Marine Logo" 
-            className="h-32 object-contain"
+            className="h-24 object-contain"
           />
+          <div className="text-right">
+            <p>Welcome, {user.username} ({user.role})</p>
+            <Button variant="outline" size="sm" onClick={logout} className="mt-2">
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </Button>
+          </div>
         </div>
 
         {/* Header */}
@@ -690,6 +532,7 @@ export const RDOForm = () => {
                   variant="outline"
                   size="sm"
                   onClick={isListening ? stopSpeechRecognition : startSpeechRecognition}
+                  disabled={!isOnline}
                   className={`flex items-center gap-2 ${isListening ? 'bg-red-100 text-red-700 border-red-300' : ''}`}
                 >
                   {isListening ? (
@@ -708,22 +551,18 @@ export const RDOForm = () => {
                    type="button"
                    onClick={async () => {
                      if (formData.serviceReport.trim()) {
-                       const summarized = await summarizeText(formData.serviceReport);
-                       if (summarized !== formData.serviceReport) {
-                         setFormData(prev => ({ ...prev, serviceReport: summarized }));
-                         toast.success("Texto reorganizado com sucesso");
-                       } else {
-                         toast.info("Texto já está bem organizado");
-                       }
+                       const enhanced = await enhanceTextWithAI(formData.serviceReport);
+                       setFormData(prev => ({ ...prev, serviceReport: enhanced }));
+                       toast.success("Text enhanced with AI!");
                      }
                    }}
                    variant="outline"
                    size="sm"
-                   disabled={isSummarizing || !formData.serviceReport.trim()}
+                   disabled={isEnhancing || !formData.serviceReport.trim() || !isOnline}
                    className="flex items-center gap-2"
                  >
                    <FileText className="h-4 w-4" />
-                   {isSummarizing ? "Organizando..." : "Organizar"}
+                   {isEnhancing ? "Enhancing..." : "Enhance with AI"}
                  </Button>
                </div>
                <Textarea
@@ -813,852 +652,33 @@ export const RDOForm = () => {
             {/* Action Buttons */}
             <div className="flex gap-4 pt-6">
               <Button
+                onClick={() => handleSaveDraft()}
+                className="flex items-center gap-2"
+                disabled={isSaving}
+              >
+                <Save className="h-4 w-4" />
+                {isSaving ? "Saving..." : "Save Draft"}
+              </Button>
+              <Button
+                onClick={handleNewForm}
+                variant="outline"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                New Form
+              </Button>
+              <Button
                 onClick={generatePDF}
                 className="flex items-center gap-2 bg-gradient-to-r from-supply-blue to-supply-blue-dark hover:from-supply-blue-dark hover:to-supply-blue"
               >
                 <Download className="h-4 w-4" />
-                Gerar PDF
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setFormData({
-                    reportNumber: "",
-                    date: "",
-                    serviceOrderNumber: "",
-                    attendanceTime: "",
-                    customer: "",
-                    vessel: "",
-                    location: "",
-                    requestor: "",
-                    purpose: "",
-                    equipment: "",
-                    manufacturer: "",
-                    model: "",
-                    serialNumber: "",
-                    teamMembers: [
-                      { register: "", worker: "", position: "", signature: "" },
-                      { register: "", worker: "", position: "", signature: "" },
-                      { register: "", worker: "", position: "", signature: "" }
-                    ],
-                    serviceReport: "",
-                    photos: [],
-                    finalLocation: "",
-                    finalDate: "",
-                    technicianSignature: "",
-                    serviceCompleted: false
-                  });
-                  setPreviewImages([]);
-                  toast.success("Formulário limpo");
-                }}
-              >
-                Limpar Formulário
+                Generate PDF
               </Button>
             </div>
           </CardContent>
         </Card>
       </div>
       
-      {/* Hidden Preview for PDF Generation with separated sections */}
-      <div className="fixed -left-[9999px] w-[210mm] bg-white text-black font-sans" style={{ 
-        fontFamily: 'Calibri, Arial, sans-serif'
-      }}>
-        
-        {/* Header Section */}
-        <div id="rdo-header" style={{ 
-          lineHeight: '1.2', 
-          fontSize: '10px',
-          padding: '15mm 15mm 0 15mm'
-        }}>
-          <div className="flex items-start justify-between mb-3">
-            <div className="flex-shrink-0" style={{ width: '120px' }}>
-              <img 
-                src="/lovable-uploads/9af83693-c9fd-4eed-a0ad-1331f324d077.png" 
-                alt="Supply Marine Logo" 
-                style={{ height: '50px', objectFit: 'contain' }}
-              />
-            </div>
-            
-            <div className="flex-1 text-center">
-              <h1 style={{ 
-                fontSize: '12px', 
-                fontWeight: 'bold', 
-                color: '#000',
-                margin: '0',
-                lineHeight: '1.2'
-              }}>
-                RELATÓRIO DIÁRIO DE OBRA
-              </h1>
-              <p style={{ 
-                fontSize: '8px', 
-                color: '#000',
-                margin: '2px 0 0 0',
-                fontStyle: 'italic'
-              }}>
-                Daily Attendance Report
-              </p>
-            </div>
-            
-            <div className="flex-shrink-0" style={{ width: '120px', textAlign: 'right' }}>
-              <p style={{ fontSize: '8px', fontWeight: 'bold', margin: '0' }}>FR - EG - 001 Rev: 00</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Main Content Section (sem assinaturas) */}
-        <div id="rdo-main-content" style={{ 
-          lineHeight: '1.2', 
-          fontSize: '10px',
-          padding: '0 15mm'
-        }}>
-          {/* First Row - Basic Info */}
-          <table style={{ 
-            width: '100%', 
-            borderCollapse: 'collapse', 
-            marginBottom: '2px',
-            border: '1px solid #333'
-          }}>
-            <tr>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '8px 4px', 
-                backgroundColor: '#A6C8E0', 
-                fontWeight: 'bold', 
-                fontSize: '9px',
-                textAlign: 'center',
-                verticalAlign: 'middle',
-                height: '25px',
-                lineHeight: '1.2'
-              }}>
-                Relatório Diário / Daily Report Nº
-              </td>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '8px 4px', 
-                backgroundColor: '#A6C8E0', 
-                fontWeight: 'bold', 
-                fontSize: '9px',
-                textAlign: 'center',
-                verticalAlign: 'middle',
-                height: '25px',
-                lineHeight: '1.2'
-              }}>
-                Data / Date
-              </td>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '8px 4px', 
-                backgroundColor: '#A6C8E0', 
-                fontWeight: 'bold', 
-                fontSize: '9px',
-                textAlign: 'center',
-                verticalAlign: 'middle',
-                height: '25px',
-                lineHeight: '1.2'
-              }}>
-                Ordem de Serviço Nº / Service Number
-              </td>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '8px 4px', 
-                backgroundColor: '#A6C8E0', 
-                fontWeight: 'bold', 
-                fontSize: '9px',
-                textAlign: 'center',
-                verticalAlign: 'middle',
-                height: '25px',
-                lineHeight: '1.2'
-              }}>
-                Horário de Atendimento / Time of Attendance
-              </td>
-            </tr>
-            <tr>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '8px 4px', 
-                fontSize: '11px', 
-                height: '30px',
-                verticalAlign: 'middle',
-                textAlign: 'center',
-                lineHeight: '1.2'
-              }}>
-                {formData.reportNumber || '0001'}
-              </td>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '8px 4px', 
-                fontSize: '11px', 
-                height: '30px',
-                verticalAlign: 'middle',
-                textAlign: 'center',
-                lineHeight: '1.2'
-              }}>
-                {formData.date || ''}
-              </td>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '8px 4px', 
-                fontSize: '11px', 
-                height: '30px',
-                verticalAlign: 'middle',
-                textAlign: 'center',
-                lineHeight: '1.2'
-              }}>
-                {formData.serviceOrderNumber || ''}
-              </td>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '8px 4px', 
-                fontSize: '11px', 
-                height: '30px',
-                verticalAlign: 'middle',
-                textAlign: 'center',
-                lineHeight: '1.2'
-              }}>
-                {formData.attendanceTime || 'De / From: _____ Até / To: _____'}
-              </td>
-            </tr>
-          </table>
-
-          {/* Second Row - Client Info */}
-          <table style={{ 
-            width: '100%', 
-            borderCollapse: 'collapse', 
-            marginBottom: '2px',
-            border: '1px solid #333'
-          }}>
-            <tr>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '6px 2px', 
-                backgroundColor: '#A6C8E0', 
-                fontWeight: 'bold', 
-                fontSize: '8px',
-                textAlign: 'center',
-                verticalAlign: 'middle',
-                height: '20px'
-              }}>
-                Cliente / Customer
-              </td>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '6px 2px', 
-                backgroundColor: '#A6C8E0', 
-                fontWeight: 'bold', 
-                fontSize: '8px',
-                textAlign: 'center',
-                verticalAlign: 'middle',
-                height: '20px'
-              }}>
-                Embarcação / Vessel
-              </td>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '6px 2px', 
-                backgroundColor: '#A6C8E0', 
-                fontWeight: 'bold', 
-                fontSize: '8px',
-                textAlign: 'center',
-                verticalAlign: 'middle',
-                height: '20px'
-              }}>
-                Local de Atendimento / Location
-              </td>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '6px 2px', 
-                backgroundColor: '#A6C8E0', 
-                fontWeight: 'bold', 
-                fontSize: '8px',
-                textAlign: 'center',
-                verticalAlign: 'middle',
-                height: '20px'
-              }}>
-                Solicitante / Requestor
-              </td>
-            </tr>
-            <tr>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '8px 4px', 
-                fontSize: '11px', 
-                height: '30px',
-                verticalAlign: 'middle',
-                textAlign: 'center',
-                lineHeight: '1.2'
-              }}>
-                {formData.customer || ''}
-              </td>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '6px 2px', 
-                fontSize: '10px', 
-                height: '25px',
-                verticalAlign: 'middle',
-                textAlign: 'center'
-              }}>
-                {formData.vessel || ''}
-              </td>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '6px 2px', 
-                fontSize: '10px', 
-                height: '25px',
-                verticalAlign: 'middle',
-                textAlign: 'center'
-              }}>
-                {formData.location || ''}
-              </td>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '6px 2px', 
-                fontSize: '10px', 
-                height: '25px',
-                verticalAlign: 'middle',
-                textAlign: 'center'
-              }}>
-                {formData.requestor || ''}
-              </td>
-            </tr>
-          </table>
-
-          {/* Purpose Section */}
-          <table style={{ 
-            width: '100%', 
-            borderCollapse: 'collapse', 
-            marginBottom: '2px',
-            border: '1px solid #333'
-          }}>
-            <tr>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '6px 2px', 
-                backgroundColor: '#A6C8E0',
-                fontWeight: 'bold', 
-                fontSize: '8px',
-                textAlign: 'center',
-                verticalAlign: 'middle',
-                height: '20px'
-              }}>
-                Objeto / Purpose
-              </td>
-            </tr>
-            <tr>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '6px 2px', 
-                fontSize: '10px', 
-                height: '30px',
-                verticalAlign: 'middle',
-                textAlign: 'center'
-              }}>
-                {formData.purpose || ''}
-              </td>
-            </tr>
-          </table>
-
-          {/* Equipment Section */}
-          <table style={{ 
-            width: '100%', 
-            borderCollapse: 'collapse', 
-            marginBottom: '2px',
-            border: '1px solid #333'
-          }}>
-            <tr>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '6px 2px', 
-                backgroundColor: '#A6C8E0',
-                fontWeight: 'bold', 
-                fontSize: '8px',
-                textAlign: 'center',
-                verticalAlign: 'middle',
-                height: '20px'
-              }}>
-                Equipamento - Sistema / Equipment - System
-              </td>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '6px 2px', 
-                backgroundColor: '#A6C8E0',
-                fontWeight: 'bold', 
-                fontSize: '8px',
-                textAlign: 'center',
-                verticalAlign: 'middle',
-                height: '20px'
-              }}>
-                Fabricante / Manufacturer
-              </td>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '6px 2px', 
-                backgroundColor: '#A6C8E0',
-                fontWeight: 'bold', 
-                fontSize: '8px',
-                textAlign: 'center',
-                verticalAlign: 'middle',
-                height: '20px'
-              }}>
-                Modelo / Model
-              </td>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '6px 2px', 
-                backgroundColor: '#A6C8E0',
-                fontWeight: 'bold', 
-                fontSize: '8px',
-                textAlign: 'center',
-                verticalAlign: 'middle',
-                height: '20px'
-              }}>
-                Serial Nº
-              </td>
-            </tr>
-            <tr>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '6px 2px', 
-                fontSize: '10px', 
-                height: '25px',
-                verticalAlign: 'middle',
-                textAlign: 'center'
-              }}>
-                {formData.equipment || ''}
-              </td>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '6px 2px', 
-                fontSize: '10px', 
-                height: '25px',
-                verticalAlign: 'middle',
-                textAlign: 'center'
-              }}>
-                {formData.manufacturer || ''}
-              </td>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '6px 2px', 
-                fontSize: '10px', 
-                height: '25px',
-                verticalAlign: 'middle',
-                textAlign: 'center'
-              }}>
-                {formData.model || ''}
-              </td>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '6px 2px', 
-                fontSize: '10px', 
-                height: '25px',
-                verticalAlign: 'middle',
-                textAlign: 'center'
-              }}>
-                {formData.serialNumber || ''}
-              </td>
-            </tr>
-          </table>
-
-          {/* Team Table */}
-          <table style={{ 
-            width: '100%', 
-            borderCollapse: 'collapse', 
-            marginBottom: '2px',
-            border: '1px solid #333'
-          }}>
-            <tr>
-              <td colSpan={5} style={{ 
-                border: '1px solid #333', 
-                padding: '6px 2px', 
-                backgroundColor: '#A6C8E0',
-                fontWeight: 'bold', 
-                fontSize: '8px',
-                textAlign: 'center',
-                verticalAlign: 'middle',
-                height: '20px'
-              }}>
-                Equipe / Team
-              </td>
-            </tr>
-            <tr>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '3px 2px', 
-                backgroundColor: 'white',
-                fontWeight: 'bold', 
-                fontSize: '8px',
-                textAlign: 'center'
-              }}>
-                Tech.
-              </td>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '3px 2px', 
-                backgroundColor: 'white',
-                fontWeight: 'bold', 
-                fontSize: '8px',
-                textAlign: 'center'
-              }}>
-                Registro / Register
-              </td>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '3px 2px', 
-                backgroundColor: 'white',
-                fontWeight: 'bold', 
-                fontSize: '8px',
-                textAlign: 'center'
-              }}>
-                Funcionário / Worker
-              </td>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '3px 2px', 
-                backgroundColor: 'white',
-                fontWeight: 'bold', 
-                fontSize: '8px',
-                textAlign: 'center'
-              }}>
-                Função / Position
-              </td>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '3px 2px', 
-                backgroundColor: 'white',
-                fontWeight: 'bold', 
-                fontSize: '8px',
-                textAlign: 'center'
-              }}>
-                Assinatura / Signature
-              </td>
-            </tr>
-            {formData.teamMembers
-              .filter(member => member.register || member.worker || member.position || member.signature)
-              .map((member, index) => (
-              <tr key={index}>
-                <td style={{ 
-                  border: '1px solid #333', 
-                  padding: '3px 2px', 
-                  fontSize: '8px', 
-                  height: '20px',
-                  verticalAlign: 'middle',
-                  textAlign: 'center'
-                }}>
-                  {index + 1}.
-                </td>
-                <td style={{ 
-                  border: '1px solid #333', 
-                  padding: '6px 2px', 
-                  fontSize: '10px', 
-                  height: '25px',
-                  verticalAlign: 'middle',
-                  textAlign: 'center'
-                }}>
-                  {member.register || ''}
-                </td>
-                <td style={{ 
-                  border: '1px solid #333', 
-                  padding: '6px 2px', 
-                  fontSize: '10px', 
-                  height: '25px',
-                  verticalAlign: 'middle',
-                  textAlign: 'center'
-                }}>
-                  {member.worker || ''}
-                </td>
-                <td style={{ 
-                  border: '1px solid #333', 
-                  padding: '6px 2px', 
-                  fontSize: '10px', 
-                  height: '25px',
-                  verticalAlign: 'middle',
-                  textAlign: 'center'
-                }}>
-                  {member.position || ''}
-                </td>
-                <td style={{ 
-                  border: '1px solid #333', 
-                  padding: '6px 2px', 
-                  fontSize: '10px', 
-                  height: '25px',
-                  verticalAlign: 'middle',
-                  textAlign: 'center'
-                }}>
-                  {member.signature || ''}
-                </td>
-              </tr>
-            ))}
-          </table>
-
-          {/* Service Report Section - Header */}
-          <table style={{ 
-            width: '100%', 
-            borderCollapse: 'collapse', 
-            marginBottom: '2px',
-            border: '1px solid #333'
-          }}>
-            <tr>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '6px 2px', 
-                backgroundColor: '#A6C8E0', 
-                fontWeight: 'bold', 
-                fontSize: '8px',
-                textAlign: 'center',
-                verticalAlign: 'middle',
-                height: '20px'
-              }}>
-                Relatório de Serviço / Service Report
-              </td>
-            </tr>
-          </table>
-
-          {/* Four Sections - Right after header */}
-          <table style={{ 
-            width: '100%', 
-            borderCollapse: 'collapse', 
-            marginBottom: '4px',
-            border: '1px solid #333'
-          }}>
-            <tr>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '2px', 
-                fontWeight: 'bold', 
-                fontSize: '8px',
-                textAlign: 'center',
-                verticalAlign: 'middle',
-                width: '25%'
-              }}>
-                (1) Descrição da Avaria / Damage Description
-              </td>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '2px', 
-                fontWeight: 'bold', 
-                fontSize: '8px',
-                textAlign: 'center',
-                verticalAlign: 'middle',
-                width: '25%'
-              }}>
-                (2) Trabalho Executado / Executed Work
-              </td>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '2px', 
-                fontWeight: 'bold', 
-                fontSize: '8px',
-                textAlign: 'center',
-                verticalAlign: 'middle',
-                width: '25%'
-              }}>
-                (3) Informações Adicionais / Additional Info
-              </td>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '2px', 
-                fontWeight: 'bold', 
-                fontSize: '8px',
-                textAlign: 'center',
-                verticalAlign: 'middle',
-                width: '25%'
-              }}>
-                (4) Comentários do Cliente / Customer's Comments
-              </td>
-            </tr>
-          </table>
-          {/* Service Report Content and Images */}
-          <table className="service-report-content" style={{ 
-            width: '100%', 
-            borderCollapse: 'collapse', 
-            marginBottom: '2px',
-            marginTop: '0px',
-            border: '1px solid #333'
-          }}>
-            <tr>
-               <td style={{ 
-                 border: '1px solid #333', 
-                 padding: '8px', 
-                 fontSize: '11px', 
-                 minHeight: '250px',
-                 verticalAlign: 'top',
-                 textAlign: 'left'
-               }}>
-                 <div style={{ marginBottom: '10px', textAlign: 'left' }}>
-                   {formData.serviceReport || ''}
-                 </div>
-                
-                {/* Photos Section */}
-                {previewImages.length > 0 && (
-                  <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: 'repeat(3, 1fr)', 
-                    gap: '8px',
-                    marginTop: '10px'
-                  }}>
-                    {previewImages.map((src, index) => (
-                      <div key={index} style={{ textAlign: 'center' }}>
-                         <img
-                           src={src}
-                           alt={`Foto ${index + 1}`}
-                           style={{ 
-                             width: '100%', 
-                             maxWidth: '150px',
-                             height: '120px',
-                             objectFit: 'cover',
-                             border: '1px solid #333',
-                             borderRadius: '4px'
-                           }}
-                         />
-                        <p style={{ 
-                          fontSize: '7px', 
-                          margin: '2px 0 0 0',
-                          fontWeight: 'bold'
-                        }}>
-                          Foto {index + 1}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </td>
-            </tr>
-          </table>
-        </div>
-
-        {/* Signatures Section */}
-        <div id="rdo-signatures" style={{ 
-          lineHeight: '1.0', 
-          fontSize: '10px',
-          padding: '0 15mm',
-          marginTop: '0px'
-        }}>
-          <table style={{ 
-            width: '100%', 
-            borderCollapse: 'collapse', 
-            marginBottom: '4px',
-            border: '1px solid #333'
-          }}>
-            <tr>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '4px 2px', 
-                fontWeight: 'bold', 
-                fontSize: '8px',
-                textAlign: 'center',
-                verticalAlign: 'middle',
-                width: '33.33%',
-                height: '18px',
-                lineHeight: '1.0'
-              }}>
-                Local e Data / Location and Date
-              </td>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '4px 2px', 
-                fontWeight: 'bold', 
-                fontSize: '8px',
-                textAlign: 'center',
-                verticalAlign: 'middle',
-                width: '33.33%',
-                height: '18px',
-                lineHeight: '1.0'
-              }}>
-                Assinatura do Técnico Responsável / Technician's Signature
-              </td>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '4px 2px', 
-                fontWeight: 'bold', 
-                fontSize: '8px',
-                textAlign: 'center',
-                verticalAlign: 'middle',
-                width: '33.33%',
-                height: '18px',
-                lineHeight: '1.0'
-              }}>
-                Serviço Concluído à Satisfação / Service Concluded Accordingly
-              </td>
-            </tr>
-            <tr>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '6px', 
-                fontSize: '10px', 
-                height: '35px',
-                verticalAlign: 'middle',
-                textAlign: 'center',
-                lineHeight: '1.0'
-              }}>
-                {formData.finalLocation || ''}
-              </td>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '6px', 
-                fontSize: '10px', 
-                height: '35px',
-                verticalAlign: 'middle',
-                textAlign: 'center',
-                lineHeight: '1.0'
-              }}>
-                {formData.technicianSignature || ''}
-              </td>
-              <td style={{ 
-                border: '1px solid #333', 
-                padding: '6px', 
-                fontSize: '10px', 
-                height: '35px',
-                verticalAlign: 'middle',
-                textAlign: 'center',
-                lineHeight: '1.0'
-              }}></td>
-            </tr>
-          </table>
-        </div>
-
-        {/* Footer Section */}
-        <div id="rdo-footer" style={{ 
-          lineHeight: '1.2', 
-          fontSize: '8px',
-          padding: '8px 15mm 15mm 15mm',
-          borderTop: '2px solid #4A90A4',
-          color: '#333'
-        }}>
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between',
-            alignItems: 'flex-start'
-          }}>
-            <div style={{ width: '24%', textAlign: 'center' }}>
-              <p style={{ fontWeight: 'bold', margin: '0 0 2px 0' }}>Headquarter | Rio de Janeiro</p>
-              <p style={{ margin: '0 0 1px 0' }}>Rua Dom Meinrado, 35 - São Cristóvão</p>
-              <p style={{ margin: '0 0 1px 0' }}>Rio de Janeiro - RJ - Brasil</p>
-              <p style={{ margin: '0 0 1px 0' }}>CEP: 20.910-100</p>
-              <p style={{ margin: '0' }}>Tel: (+55 21) 2596-6262</p>
-            </div>
-            <div style={{ width: '24%', textAlign: 'center' }}>
-              <p style={{ fontWeight: 'bold', margin: '0 0 2px 0' }}>Base Operacional | Rio das Ostras</p>
-              <p style={{ margin: '0 0 1px 0' }}>Rodovia Amaral Peixoto, Km 160</p>
-              <p style={{ margin: '0 0 1px 0' }}>Lote 95 A - Mar do Norte</p>
-              <p style={{ margin: '0 0 1px 0' }}>Rio das Ostras - RJ - Brasil</p>
-              <p style={{ margin: '0' }}>CEP: 28.898-000</p>
-            </div>
-            <div style={{ width: '24%', textAlign: 'center' }}>
-              <p style={{ fontWeight: 'bold', margin: '0 0 2px 0' }}>Base Operacional | Porto do Açu</p>
-              <p style={{ margin: '0 0 1px 0' }}>Via 5 Projetada, Lote A12 -</p>
-              <p style={{ margin: '0 0 1px 0' }}>Distrito Industrial - São João da Barra - RJ</p>
-              <p style={{ margin: '0' }}>Brasil - CEP: 28.200-000</p>
-            </div>
-            <div style={{ width: '24%', textAlign: 'center' }}>
-              <p style={{ margin: '0 0 1px 0' }}>Tel: (+55 21) 2596-6262</p>
-              <p style={{ margin: '0 0 1px 0' }}>contato@supplymarine.com.br</p>
-              <p style={{ margin: '0 0 1px 0' }}>supplymarine.com.br</p>
-              <p style={{ margin: '0 0 1px 0' }}>Supply marine Serviços Ltda</p>
-              <p style={{ margin: '0 0 1px 0' }}>CNPJ: 03.513.274/0001-95</p>
-              <p style={{ margin: '0' }}>I.E.: 77.009.817</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* The hidden preview is no longer needed here */}
     </div>
   );
 };

@@ -88,24 +88,6 @@ export const RDOForm = ({ initialData, onSave }: RDOFormProps) => {
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const enhanceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Auto-save effect
-  useEffect(() => {
-    if (!user) return;
-
-    // Do not save if the form is pristine (e.g., only has the default blank data)
-    if (!formData.reportNumber && !formData.customer && !formData.serviceReport) {
-        return;
-    }
-
-    const handler = setTimeout(() => {
-      handleSaveDraft(true); // isAutoSave = true
-    }, 2500); // Save 2.5 seconds after user stops typing
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [formData, user, handleSaveDraft]);
-
   const handleSaveDraft = useCallback(async (isAutoSave = false) => {
     if (!user) {
       if (!isAutoSave) toast.error("You must be logged in to save a draft.");
@@ -129,6 +111,24 @@ export const RDOForm = ({ initialData, onSave }: RDOFormProps) => {
       setIsSaving(false);
     }
   }, [user, formData, onSave]);
+
+  // Auto-save effect
+  useEffect(() => {
+    if (!user) return;
+
+    // Do not save if the form is pristine (e.g., only has the default blank data)
+    if (!formData.reportNumber && !formData.customer && !formData.serviceReport) {
+        return;
+    }
+
+    const handler = setTimeout(() => {
+      handleSaveDraft(true); // isAutoSave = true
+    }, 2500); // Save 2.5 seconds after user stops typing
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [formData, user, handleSaveDraft]);
 
   const handleNewForm = () => {
     handleSaveDraft(); // Save current work first

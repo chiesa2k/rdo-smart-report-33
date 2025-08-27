@@ -30,13 +30,12 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
   await new Promise(resolve => setTimeout(resolve, 1500));
 
   const pdf = new jsPDF('p', 'mm', 'a4');
-  const templateElement = container.querySelector('#pdf-template') as HTMLElement;
-  if (!templateElement) throw new Error("PDF template element not found");
 
-  const headerElement = templateElement.querySelector('#rdo-header') as HTMLElement;
-  const mainContentElement = templateElement.querySelector('#rdo-main-content') as HTMLElement;
-  const signatureElement = templateElement.querySelector('#rdo-signatures') as HTMLElement;
-  const footerElement = templateElement.querySelector('#rdo-footer') as HTMLElement;
+  // Select all parts from the top-level container to ensure they are all found
+  const headerElement = container.querySelector('#rdo-header') as HTMLElement;
+  const mainContentElement = container.querySelector('#rdo-main-content') as HTMLElement;
+  const signatureElement = container.querySelector('#rdo-signatures') as HTMLElement;
+  const footerElement = container.querySelector('#rdo-footer') as HTMLElement;
 
   if (!headerElement || !mainContentElement || !signatureElement || !footerElement) {
     throw new Error("Could not find all required elements in the PDF template.");

@@ -88,6 +88,30 @@ export const RDOForm = ({ initialData, onSave }: RDOFormProps) => {
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const enhanceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  const handleSaveDraft = useCallback(async (isAutoSave = false) => {
+    if (!user) {
+      if (!isAutoSave) toast.error("You must be logged in to save a draft.");
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const savedDraft = await saveRdoDraft(user.id, formData);
+      // Only update state with the new ID if it's the first save
+      if (!formData.id && savedDraft.id) {
+        setFormData(prev => ({ ...prev, id: savedDraft.id }));
+      }
+      if (!isAutoSave) {
+          toast.success("Draft saved!");
+      }
+      onSave(); // Notify parent that a save occurred
+    } catch (error) {
+      if (!isAutoSave) toast.error("Failed to save draft.");
+      console.error(error);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [user, formData, onSave]);
+
   // Auto-save effect
   useEffect(() => {
     if (!user) return;
@@ -105,27 +129,6 @@ export const RDOForm = ({ initialData, onSave }: RDOFormProps) => {
       clearTimeout(handler);
     };
   }, [formData, user, handleSaveDraft]);
-
-  const handleSaveDraft = useCallback(async (isAutoSave = false) => {
-    if (!user) {
-      if (!isAutoSave) toast.error("You must be logged in to save a draft.");
-      return;
-    }
-    setIsSaving(true);
-    try {
-      const savedDraft = await saveRdoDraft(user.id, formData);
-      setFormData(prev => ({...prev, id: savedDraft.id}));
-      if (!isAutoSave) {
-          toast.success("Draft saved!");
-      }
-      onSave(); // Notify parent that a save occurred
-    } catch (error) {
-      if (!isAutoSave) toast.error("Failed to save draft.");
-      console.error(error);
-    } finally {
-      setIsSaving(false);
-    }
-  }, [user, formData, onSave]);
 
   const handleNewForm = () => {
     handleSaveDraft(); // Save current work first

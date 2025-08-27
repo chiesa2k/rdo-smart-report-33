@@ -6,802 +6,207 @@ interface RdoPdfTemplateProps {
 }
 
 export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps) => {
-  return (
-    <div className="fixed -left-[9999px] w-[210mm] bg-white text-black font-sans" style={{
-      fontFamily: 'Calibri, Arial, sans-serif'
-    }}>
+  // Helper to avoid empty cells and have a placeholder
+  const val = (value: string | undefined | null) => value || '';
 
-      {/* Header Section */}
-      <div id="rdo-header" style={{
-        lineHeight: '1.2',
-        fontSize: '10px',
-        padding: '15mm 15mm 0 15mm'
-      }}>
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex-shrink-0" style={{ width: '120px' }}>
+  return (
+    <div className="fixed -left-[9999px] w-[210mm] bg-white text-black" style={{ fontFamily: 'Arial, sans-serif' }}>
+      <div id="pdf-template" className="p-[15mm] space-y-2 text-[8pt]">
+
+        {/* Header Section */}
+        <div id="rdo-header" className="flex justify-between items-start mb-2">
+          <div className="w-[40mm]">
             <img
               src="/lovable-uploads/9af83693-c9fd-4eed-a0ad-1331f324d077.png"
               alt="Supply Marine Logo"
-              style={{ height: '50px', objectFit: 'contain' }}
+              className="h-[15mm] object-contain"
             />
+            <p className="text-[7pt] pl-[2mm]">HVAC-R Naval & Offshore</p>
           </div>
-
-          <div className="flex-1 text-center">
-            <h1 style={{
-              fontSize: '12px',
-              fontWeight: 'bold',
-              color: '#000',
-              margin: '0',
-              lineHeight: '1.2'
-            }}>
-              RELATÓRIO DIÁRIO DE OBRA
-            </h1>
-            <p style={{
-              fontSize: '8px',
-              color: '#000',
-              margin: '2px 0 0 0',
-              fontStyle: 'italic'
-            }}>
-              Daily Attendance Report
-            </p>
+          <div className="text-center">
+            <h1 className="font-bold text-[10pt]">RELATÓRIO DIÁRIO DE OBRA</h1>
+            <p className="text-[7pt]">Daily Attendance Report</p>
           </div>
-
-          <div className="flex-shrink-0" style={{ width: '120px', textAlign: 'right' }}>
-            <p style={{ fontSize: '8px', fontWeight: 'bold', margin: '0' }}>FR - EG - 001 Rev: 00</p>
+          <div className="w-[40mm] text-right font-bold">
+            <p>FR - EG - 001</p>
+            <p>Rev: 00</p>
           </div>
         </div>
-      </div>
 
-      {/* Main Content Section (sem assinaturas) */}
-      <div id="rdo-main-content" style={{
-        lineHeight: '1.2',
-        fontSize: '10px',
-        padding: '0 15mm'
-      }}>
-        {/* First Row - Basic Info */}
-        <table style={{
-          width: '100%',
-          borderCollapse: 'collapse',
-          marginBottom: '2px',
-          border: '1px solid #333'
-        }}>
-          <tr>
-            <td style={{
-              border: '1px solid #333',
-              padding: '8px 4px',
-              backgroundColor: '#A6C8E0',
-              fontWeight: 'bold',
-              fontSize: '9px',
-              textAlign: 'center',
-              verticalAlign: 'middle',
-              height: '25px',
-              lineHeight: '1.2'
-            }}>
-              Relatório Diário / Daily Report Nº
-            </td>
-            <td style={{
-              border: '1px solid #333',
-              padding: '8px 4px',
-              backgroundColor: '#A6C8E0',
-              fontWeight: 'bold',
-              fontSize: '9px',
-              textAlign: 'center',
-              verticalAlign: 'middle',
-              height: '25px',
-              lineHeight: '1.2'
-            }}>
-              Data / Date
-            </td>
-            <td style={{
-              border: '1px solid #333',
-              padding: '8px 4px',
-              backgroundColor: '#A6C8E0',
-              fontWeight: 'bold',
-              fontSize: '9px',
-              textAlign: 'center',
-              verticalAlign: 'middle',
-              height: '25px',
-              lineHeight: '1.2'
-            }}>
-              Ordem de Serviço Nº / Service Number
-            </td>
-            <td style={{
-              border: '1px solid #333',
-              padding: '8px 4px',
-              backgroundColor: '#A6C8E0',
-              fontWeight: 'bold',
-              fontSize: '9px',
-              textAlign: 'center',
-              verticalAlign: 'middle',
-              height: '25px',
-              lineHeight: '1.2'
-            }}>
-              Horário de Atendimento / Time of Attendance
-            </td>
-          </tr>
-          <tr>
-            <td style={{
-              border: '1px solid #333',
-              padding: '8px 4px',
-              fontSize: '11px',
-              height: '30px',
-              verticalAlign: 'middle',
-              textAlign: 'center',
-              lineHeight: '1.2'
-            }}>
-              {formData.reportNumber || '0001'}
-            </td>
-            <td style={{
-              border: '1px solid #333',
-              padding: '8px 4px',
-              fontSize: '11px',
-              height: '30px',
-              verticalAlign: 'middle',
-              textAlign: 'center',
-              lineHeight: '1.2'
-            }}>
-              {formData.date || ''}
-            </td>
-            <td style={{
-              border: '1px solid #333',
-              padding: '8px 4px',
-              fontSize: '11px',
-              height: '30px',
-              verticalAlign: 'middle',
-              textAlign: 'center',
-              lineHeight: '1.2'
-            }}>
-              {formData.serviceOrderNumber || ''}
-            </td>
-            <td style={{
-              border: '1px solid #333',
-              padding: '8px 4px',
-              fontSize: '11px',
-              height: '30px',
-              verticalAlign: 'middle',
-              textAlign: 'center',
-              lineHeight: '1.2'
-            }}>
-              {formData.attendanceTime || 'De / From: _____ Até / To: _____'}
-            </td>
-          </tr>
-        </table>
+        {/* Main Content Section */}
+        <div id="rdo-main-content">
+          <table className="w-full border-collapse border border-black">
+            <tbody>
+              <tr className="bg-gray-200 text-center font-bold">
+                <td className="border border-black p-1">Relatório Diário / Daily Report N°</td>
+                <td className="border border-black p-1">Data / Date</td>
+                <td className="border border-black p-1">Ordem de Serviço N° / Service Number</td>
+                <td className="border border-black p-1">Horário de Atendimento / Time of Attendance</td>
+              </tr>
+              <tr className="text-center h-[10mm]">
+                <td className="border border-black p-1">{val(formData.reportNumber)}</td>
+                <td className="border border-black p-1">{val(formData.date)}</td>
+                <td className="border border-black p-1">{val(formData.serviceOrderNumber)}</td>
+                <td className="border border-black p-1">{val(formData.attendanceTime)}</td>
+              </tr>
+            </tbody>
+          </table>
 
-        {/* Second Row - Client Info */}
-        <table style={{
-          width: '100%',
-          borderCollapse: 'collapse',
-          marginBottom: '2px',
-          border: '1px solid #333'
-        }}>
-          <tr>
-            <td style={{
-              border: '1px solid #333',
-              padding: '6px 2px',
-              backgroundColor: '#A6C8E0',
-              fontWeight: 'bold',
-              fontSize: '8px',
-              textAlign: 'center',
-              verticalAlign: 'middle',
-              height: '20px'
-            }}>
-              Cliente / Customer
-            </td>
-            <td style={{
-              border: '1px solid #333',
-              padding: '6px 2px',
-              backgroundColor: '#A6C8E0',
-              fontWeight: 'bold',
-              fontSize: '8px',
-              textAlign: 'center',
-              verticalAlign: 'middle',
-              height: '20px'
-            }}>
-              Embarcação / Vessel
-            </td>
-            <td style={{
-              border: '1px solid #333',
-              padding: '6px 2px',
-              backgroundColor: '#A6C8E0',
-              fontWeight: 'bold',
-              fontSize: '8px',
-              textAlign: 'center',
-              verticalAlign: 'middle',
-              height: '20px'
-            }}>
-              Local de Atendimento / Location
-            </td>
-            <td style={{
-              border: '1px solid #333',
-              padding: '6px 2px',
-              backgroundColor: '#A6C8E0',
-              fontWeight: 'bold',
-              fontSize: '8px',
-              textAlign: 'center',
-              verticalAlign: 'middle',
-              height: '20px'
-            }}>
-              Solicitante / Requestor
-            </td>
-          </tr>
-          <tr>
-            <td style={{
-              border: '1px solid #333',
-              padding: '8px 4px',
-              fontSize: '11px',
-              height: '30px',
-              verticalAlign: 'middle',
-              textAlign: 'center',
-              lineHeight: '1.2'
-            }}>
-              {formData.customer || ''}
-            </td>
-            <td style={{
-              border: '1px solid #333',
-              padding: '6px 2px',
-              fontSize: '10px',
-              height: '25px',
-              verticalAlign: 'middle',
-              textAlign: 'center'
-            }}>
-              {formData.vessel || ''}
-            </td>
-            <td style={{
-              border: '1px solid #333',
-              padding: '6px 2px',
-              fontSize: '10px',
-              height: '25px',
-              verticalAlign: 'middle',
-              textAlign: 'center'
-            }}>
-              {formData.location || ''}
-            </td>
-            <td style={{
-              border: '1px solid #333',
-              padding: '6px 2px',
-              fontSize: '10px',
-              height: '25px',
-              verticalAlign: 'middle',
-              textAlign: 'center'
-            }}>
-              {formData.requestor || ''}
-            </td>
-          </tr>
-        </table>
+          <table className="w-full border-collapse border border-black mt-2">
+            <tbody>
+              <tr className="bg-gray-200 text-center font-bold">
+                <td className="border border-black p-1">Cliente / Customer</td>
+                <td className="border border-black p-1">Embarcação / Vessel</td>
+                <td className="border border-black p-1">Local de Atendimento / Location</td>
+                <td className="border border-black p-1">Solicitante / Requestor</td>
+              </tr>
+              <tr className="text-center h-[10mm]">
+                <td className="border border-black p-1">{val(formData.customer)}</td>
+                <td className="border border-black p-1">{val(formData.vessel)}</td>
+                <td className="border border-black p-1">{val(formData.location)}</td>
+                <td className="border border-black p-1">{val(formData.requestor)}</td>
+              </tr>
+            </tbody>
+          </table>
 
-        {/* Purpose Section */}
-        <table style={{
-          width: '100%',
-          borderCollapse: 'collapse',
-          marginBottom: '2px',
-          border: '1px solid #333'
-        }}>
-          <tr>
-            <td style={{
-              border: '1px solid #333',
-              padding: '6px 2px',
-              backgroundColor: '#A6C8E0',
-              fontWeight: 'bold',
-              fontSize: '8px',
-              textAlign: 'center',
-              verticalAlign: 'middle',
-              height: '20px'
-            }}>
-              Objeto / Purpose
-            </td>
-          </tr>
-          <tr>
-            <td style={{
-              border: '1px solid #333',
-              padding: '6px 2px',
-              fontSize: '10px',
-              height: '30px',
-              verticalAlign: 'middle',
-              textAlign: 'center'
-            }}>
-              {formData.purpose || ''}
-            </td>
-          </tr>
-        </table>
+          <table className="w-full border-collapse border border-black mt-2">
+            <tbody>
+              <tr className="bg-gray-200 text-center font-bold">
+                <td className="border border-black p-1">Objeto / Purpose</td>
+              </tr>
+              <tr className="h-[10mm]">
+                <td className="border border-black p-1">{val(formData.purpose)}</td>
+              </tr>
+            </tbody>
+          </table>
 
-        {/* Equipment Section */}
-        <table style={{
-          width: '100%',
-          borderCollapse: 'collapse',
-          marginBottom: '2px',
-          border: '1px solid #333'
-        }}>
-          <tr>
-            <td style={{
-              border: '1px solid #333',
-              padding: '6px 2px',
-              backgroundColor: '#A6C8E0',
-              fontWeight: 'bold',
-              fontSize: '8px',
-              textAlign: 'center',
-              verticalAlign: 'middle',
-              height: '20px'
-            }}>
-              Equipamento - Sistema / Equipment - System
-            </td>
-            <td style={{
-              border: '1px solid #333',
-              padding: '6px 2px',
-              backgroundColor: '#A6C8E0',
-              fontWeight: 'bold',
-              fontSize: '8px',
-              textAlign: 'center',
-              verticalAlign: 'middle',
-              height: '20px'
-            }}>
-              Fabricante / Manufacturer
-            </td>
-            <td style={{
-              border: '1px solid #333',
-              padding: '6px 2px',
-              backgroundColor: '#A6C8E0',
-              fontWeight: 'bold',
-              fontSize: '8px',
-              textAlign: 'center',
-              verticalAlign: 'middle',
-              height: '20px'
-            }}>
-              Modelo / Model
-            </td>
-            <td style={{
-              border: '1px solid #333',
-              padding: '6px 2px',
-              backgroundColor: '#A6C8E0',
-              fontWeight: 'bold',
-              fontSize: '8px',
-              textAlign: 'center',
-              verticalAlign: 'middle',
-              height: '20px'
-            }}>
-              Serial Nº
-            </td>
-          </tr>
-          <tr>
-            <td style={{
-              border: '1px solid #333',
-              padding: '6px 2px',
-              fontSize: '10px',
-              height: '25px',
-              verticalAlign: 'middle',
-              textAlign: 'center'
-            }}>
-              {formData.equipment || ''}
-            </td>
-            <td style={{
-              border: '1px solid #333',
-              padding: '6px 2px',
-              fontSize: '10px',
-              height: '25px',
-              verticalAlign: 'middle',
-              textAlign: 'center'
-            }}>
-              {formData.manufacturer || ''}
-            </td>
-            <td style={{
-              border: '1px solid #333',
-              padding: '6px 2px',
-              fontSize: '10px',
-              height: '25px',
-              verticalAlign: 'middle',
-              textAlign: 'center'
-            }}>
-              {formData.model || ''}
-            </td>
-            <td style={{
-              border: '1px solid #333',
-              padding: '6px 2px',
-              fontSize: '10px',
-              height: '25px',
-              verticalAlign: 'middle',
-              textAlign: 'center'
-            }}>
-              {formData.serialNumber || ''}
-            </td>
-          </tr>
-        </table>
+          <table className="w-full border-collapse border border-black mt-2">
+            <tbody>
+              <tr className="bg-gray-200 text-center font-bold">
+                <td className="border border-black p-1">Equipamento - Sistema / Equipment - System</td>
+                <td className="border border-black p-1">Fabricante / Manufacturer</td>
+                <td className="border border-black p-1">Modelo / Model</td>
+                <td className="border border-black p-1">Serial N°</td>
+              </tr>
+              <tr className="text-center h-[10mm]">
+                <td className="border border-black p-1">{val(formData.equipment)}</td>
+                <td className="border border-black p-1">{val(formData.manufacturer)}</td>
+                <td className="border border-black p-1">{val(formData.model)}</td>
+                <td className="border border-black p-1">{val(formData.serialNumber)}</td>
+              </tr>
+            </tbody>
+          </table>
 
-        {/* Team Table */}
-        <table style={{
-          width: '100%',
-          borderCollapse: 'collapse',
-          marginBottom: '2px',
-          border: '1px solid #333'
-        }}>
-          <tr>
-            <td colSpan={5} style={{
-              border: '1px solid #333',
-              padding: '6px 2px',
-              backgroundColor: '#A6C8E0',
-              fontWeight: 'bold',
-              fontSize: '8px',
-              textAlign: 'center',
-              verticalAlign: 'middle',
-              height: '20px'
-            }}>
-              Equipe / Team
-            </td>
-          </tr>
-          <tr>
-            <td style={{
-              border: '1px solid #333',
-              padding: '3px 2px',
-              backgroundColor: 'white',
-              fontWeight: 'bold',
-              fontSize: '8px',
-              textAlign: 'center'
-            }}>
-              Tech.
-            </td>
-            <td style={{
-              border: '1px solid #333',
-              padding: '3px 2px',
-              backgroundColor: 'white',
-              fontWeight: 'bold',
-              fontSize: '8px',
-              textAlign: 'center'
-            }}>
-              Registro / Register
-            </td>
-            <td style={{
-              border: '1px solid #333',
-              padding: '3px 2px',
-              backgroundColor: 'white',
-              fontWeight: 'bold',
-              fontSize: '8px',
-              textAlign: 'center'
-            }}>
-              Funcionário / Worker
-            </td>
-            <td style={{
-              border: '1px solid #333',
-              padding: '3px 2px',
-              backgroundColor: 'white',
-              fontWeight: 'bold',
-              fontSize: '8px',
-              textAlign: 'center'
-            }}>
-              Função / Position
-            </td>
-            <td style={{
-              border: '1px solid #333',
-              padding: '3px 2px',
-              backgroundColor: 'white',
-              fontWeight: 'bold',
-              fontSize: '8px',
-              textAlign: 'center'
-            }}>
-              Assinatura / Signature
-            </td>
-          </tr>
-          {formData.teamMembers
-            .filter(member => member.register || member.worker || member.position || member.signature)
-            .map((member, index) => (
-            <tr key={index}>
-              <td style={{
-                border: '1px solid #333',
-                padding: '3px 2px',
-                fontSize: '8px',
-                height: '20px',
-                verticalAlign: 'middle',
-                textAlign: 'center'
-              }}>
-                {index + 1}.
-              </td>
-              <td style={{
-                border: '1px solid #333',
-                padding: '6px 2px',
-                fontSize: '10px',
-                height: '25px',
-                verticalAlign: 'middle',
-                textAlign: 'center'
-              }}>
-                {member.register || ''}
-              </td>
-              <td style={{
-                border: '1px solid #333',
-                padding: '6px 2px',
-                fontSize: '10px',
-                height: '25px',
-                verticalAlign: 'middle',
-                textAlign: 'center'
-              }}>
-                {member.worker || ''}
-              </td>
-              <td style={{
-                border: '1px solid #333',
-                padding: '6px 2px',
-                fontSize: '10px',
-                height: '25px',
-                verticalAlign: 'middle',
-                textAlign: 'center'
-              }}>
-                {member.position || ''}
-              </td>
-              <td style={{
-                border: '1px solid #333',
-                padding: '6px 2px',
-                fontSize: '10px',
-                height: '25px',
-                verticalAlign: 'middle',
-                textAlign: 'center'
-              }}>
-                {member.signature || ''}
-              </td>
-            </tr>
-          ))}
-        </table>
+          <table className="w-full border-collapse border border-black mt-2">
+            <thead>
+              <tr className="bg-gray-200 text-center font-bold">
+                <td colSpan={5} className="border border-black p-1">Equipe / Team</td>
+              </tr>
+              <tr className="bg-gray-200 text-center font-bold">
+                <td className="border border-black p-1 w-[8mm]">Tech.</td>
+                <td className="border border-black p-1">Registro / Register</td>
+                <td className="border border-black p-1">Funcionário / Worker</td>
+                <td className="border border-black p-1">Função / Position</td>
+                <td className="border border-black p-1">Assinatura / Signature</td>
+              </tr>
+            </thead>
+            <tbody>
+              {formData.teamMembers.map((member, index) => (
+                <tr key={index} className="text-center h-[10mm]">
+                  <td className="border border-black p-1">{index + 1}.</td>
+                  <td className="border border-black p-1">{val(member.register)}</td>
+                  <td className="border border-black p-1">{val(member.worker)}</td>
+                  <td className="border border-black p-1">{val(member.position)}</td>
+                  <td className="border border-black p-1">{val(member.signature)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
 
-        {/* Service Report Section - Header */}
-        <table style={{
-          width: '100%',
-          borderCollapse: 'collapse',
-          marginBottom: '2px',
-          border: '1px solid #333'
-        }}>
-          <tr>
-            <td style={{
-              border: '1px solid #333',
-              padding: '6px 2px',
-              backgroundColor: '#A6C8E0',
-              fontWeight: 'bold',
-              fontSize: '8px',
-              textAlign: 'center',
-              verticalAlign: 'middle',
-              height: '20px'
-            }}>
-              Relatório de Serviço / Service Report
-            </td>
-          </tr>
-        </table>
-
-        {/* Four Sections - Right after header */}
-        <table style={{
-          width: '100%',
-          borderCollapse: 'collapse',
-          marginBottom: '4px',
-          border: '1px solid #333'
-        }}>
-          <tr>
-            <td style={{
-              border: '1px solid #333',
-              padding: '2px',
-              fontWeight: 'bold',
-              fontSize: '8px',
-              textAlign: 'center',
-              verticalAlign: 'middle',
-              width: '25%'
-            }}>
-              (1) Descrição da Avaria / Damage Description
-            </td>
-            <td style={{
-              border: '1px solid #333',
-              padding: '2px',
-              fontWeight: 'bold',
-              fontSize: '8px',
-              textAlign: 'center',
-              verticalAlign: 'middle',
-              width: '25%'
-            }}>
-              (2) Trabalho Executado / Executed Work
-            </td>
-            <td style={{
-              border: '1px solid #333',
-              padding: '2px',
-              fontWeight: 'bold',
-              fontSize: '8px',
-              textAlign: 'center',
-              verticalAlign: 'middle',
-              width: '25%'
-            }}>
-              (3) Informações Adicionais / Additional Info
-            </td>
-            <td style={{
-              border: '1px solid #333',
-              padding: '2px',
-              fontWeight: 'bold',
-              fontSize: '8px',
-              textAlign: 'center',
-              verticalAlign: 'middle',
-              width: '25%'
-            }}>
-              (4) Comentários do Cliente / Customer's Comments
-            </td>
-          </tr>
-        </table>
-        {/* Service Report Content and Images */}
-        <table className="service-report-content" style={{
-          width: '100%',
-          borderCollapse: 'collapse',
-          marginBottom: '2px',
-          marginTop: '0px',
-          border: '1px solid #333'
-        }}>
-          <tr>
-             <td style={{
-               border: '1px solid #333',
-               padding: '8px',
-               fontSize: '11px',
-               minHeight: '250px',
-               verticalAlign: 'top',
-               textAlign: 'left'
-             }}>
-               <div style={{ marginBottom: '10px', textAlign: 'left' }}>
-                 {formData.serviceReport || ''}
-               </div>
-
-              {/* Photos Section */}
-              {previewImages.length > 0 && (
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(3, 1fr)',
-                  gap: '8px',
-                  marginTop: '10px'
-                }}>
-                  {previewImages.map((src, index) => (
-                    <div key={index} style={{ textAlign: 'center' }}>
-                       <img
-                         src={src}
-                         alt={`Foto ${index + 1}`}
-                         style={{
-                           width: '100%',
-                           maxWidth: '150px',
-                           height: '120px',
-                           objectFit: 'cover',
-                           border: '1px solid #333',
-                           borderRadius: '4px'
-                         }}
-                       />
-                      <p style={{
-                        fontSize: '7px',
-                        margin: '2px 0 0 0',
-                        fontWeight: 'bold'
-                      }}>
-                        Foto {index + 1}
-                      </p>
+          <table className="w-full border-collapse border border-black mt-2">
+            <thead>
+              <tr className="bg-gray-200 text-center font-bold">
+                <td colSpan={4} className="border border-black p-1">Relatório de Serviço / Service Report</td>
+              </tr>
+              <tr className="bg-gray-200 text-center font-bold text-[7pt]">
+                <td className="border border-black p-1 w-1/4">(1) Descrição da Avaria / Damage Description</td>
+                <td className="border border-black p-1 w-1/4">(2) Trabalho Executado / Executed Work</td>
+                <td className="border border-black p-1 w-1/4">(3) Informações Adicionais / Additional Info</td>
+                <td className="border border-black p-1 w-1/4">(4) Comentários do Cliente / Customer's Comments</td>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colSpan={4} className="border border-black p-2 align-top h-[100mm]">
+                  <div className="whitespace-pre-wrap">{val(formData.serviceReport)}</div>
+                  {previewImages.length > 0 && (
+                    <div className="mt-4 grid grid-cols-3 gap-4">
+                      {previewImages.map((src, index) => (
+                        <div key={index} className="text-center">
+                          <img
+                            src={src}
+                            alt={`Foto ${index + 1}`}
+                            className="w-full h-auto object-cover border border-black"
+                          />
+                          <p className="text-[7pt] font-bold mt-1">Foto {index + 1}</p>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              )}
-            </td>
-          </tr>
-        </table>
-      </div>
+                  )}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-      {/* Signatures Section */}
-      <div id="rdo-signatures" style={{
-        lineHeight: '1.0',
-        fontSize: '10px',
-        padding: '0 15mm',
-        marginTop: '0px'
-      }}>
-        <table style={{
-          width: '100%',
-          borderCollapse: 'collapse',
-          marginBottom: '4px',
-          border: '1px solid #333'
-        }}>
-          <tr>
-            <td style={{
-              border: '1px solid #333',
-              padding: '4px 2px',
-              fontWeight: 'bold',
-              fontSize: '8px',
-              textAlign: 'center',
-              verticalAlign: 'middle',
-              width: '33.33%',
-              height: '18px',
-              lineHeight: '1.0'
-            }}>
-              Local e Data / Location and Date
-            </td>
-            <td style={{
-              border: '1px solid #333',
-              padding: '4px 2px',
-              fontWeight: 'bold',
-              fontSize: '8px',
-              textAlign: 'center',
-              verticalAlign: 'middle',
-              width: '33.33%',
-              height: '18px',
-              lineHeight: '1.0'
-            }}>
-              Assinatura do Técnico Responsável / Technician's Signature
-            </td>
-            <td style={{
-              border: '1px solid #333',
-              padding: '4px 2px',
-              fontWeight: 'bold',
-              fontSize: '8px',
-              textAlign: 'center',
-              verticalAlign: 'middle',
-              width: '33.33%',
-              height: '18px',
-              lineHeight: '1.0'
-            }}>
-              Serviço Concluído à Satisfação / Service Concluded Accordingly
-            </td>
-          </tr>
-          <tr>
-            <td style={{
-              border: '1px solid #333',
-              padding: '6px',
-              fontSize: '10px',
-              height: '35px',
-              verticalAlign: 'middle',
-              textAlign: 'center',
-              lineHeight: '1.0'
-            }}>
-              {formData.finalLocation || ''}
-            </td>
-            <td style={{
-              border: '1px solid #333',
-              padding: '6px',
-              fontSize: '10px',
-              height: '35px',
-              verticalAlign: 'middle',
-              textAlign: 'center',
-              lineHeight: '1.0'
-            }}>
-              {formData.technicianSignature || ''}
-            </td>
-            <td style={{
-              border: '1px solid #333',
-              padding: '6px',
-              fontSize: '10px',
-              height: '35px',
-              verticalAlign: 'middle',
-              textAlign: 'center',
-              lineHeight: '1.0'
-            }}></td>
-          </tr>
-        </table>
+        {/* Signatures Section */}
+        <div id="rdo-signatures" className="pt-2">
+          <table className="w-full border-collapse border border-black">
+            <tbody>
+              <tr className="bg-gray-200 text-center font-bold">
+                <td className="border border-black p-1 w-1/3">Local e Data / Location and Date</td>
+                <td className="border border-black p-1 w-1/3">Assinatura do Técnico Responsável / Technician's Signature</td>
+                <td className="border border-black p-1 w-1/3">Serviço Concluído à Satisfação / Service Concluded Accordingly</td>
+              </tr>
+              <tr className="text-center h-[15mm]">
+                <td className="border border-black p-1">{val(formData.finalLocation)}</td>
+                <td className="border border-black p-1">{val(formData.technicianSignature)}</td>
+                <td className="border border-black p-1"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
       </div>
 
       {/* Footer Section */}
-      <div id="rdo-footer" style={{
-        lineHeight: '1.2',
-        fontSize: '8px',
-        padding: '8px 15mm 15mm 15mm',
-        borderTop: '2px solid #4A90A4',
-        color: '#333'
-      }}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start'
-        }}>
-          <div style={{ width: '24%', textAlign: 'center' }}>
-            <p style={{ fontWeight: 'bold', margin: '0 0 2px 0' }}>Headquarter | Rio de Janeiro</p>
-            <p style={{ margin: '0 0 1px 0' }}>Rua Dom Meinrado, 35 - São Cristóvão</p>
-            <p style={{ margin: '0 0 1px 0' }}>Rio de Janeiro - RJ - Brasil</p>
-            <p style={{ margin: '0 0 1px 0' }}>CEP: 20.910-100</p>
-            <p style={{ margin: '0' }}>Tel: (+55 21) 2596-6262</p>
+      <div id="rdo-footer" className="absolute bottom-[15mm] left-[15mm] right-[15mm] text-[7pt] border-t-2 border-blue-400 pt-1">
+        <div className="flex justify-between text-center">
+          <div>
+            <p className="font-bold">Headquarter | Rio de Janeiro</p>
+            <p>Rua Dom Meinrado, 35 - São Cristóvão</p>
+            <p>Rio de Janeiro - RJ - Brasil - CEP: 20.910-100</p>
+            <p>Tel: (+55 21) 2596-6262</p>
           </div>
-          <div style={{ width: '24%', textAlign: 'center' }}>
-            <p style={{ fontWeight: 'bold', margin: '0 0 2px 0' }}>Base Operacional | Rio das Ostras</p>
-            <p style={{ margin: '0 0 1px 0' }}>Rodovia Amaral Peixoto, Km 160</p>
-            <p style={{ margin: '0 0 1px 0' }}>Lote 95 A - Mar do Norte</p>
-            <p style={{ margin: '0 0 1px 0' }}>Rio das Ostras - RJ - Brasil</p>
-            <p style={{ margin: '0' }}>CEP: 28.898-000</p>
+          <div>
+            <p className="font-bold">Base Operacional | Rio das Ostras</p>
+            <p>Rodovia Amaral Peixoto, Km 160</p>
+            <p>Lote 95 A - Mar do Norte - Rio das Ostras - RJ - Brasil</p>
+            <p>CEP: 28.898-000</p>
           </div>
-          <div style={{ width: '24%', textAlign: 'center' }}>
-            <p style={{ fontWeight: 'bold', margin: '0 0 2px 0' }}>Base Operacional | Porto do Açu</p>
-            <p style={{ margin: '0 0 1px 0' }}>Via 5 Projetada, Lote A12 -</p>
-            <p style={{ margin: '0 0 1px 0' }}>Distrito Industrial - São João da Barra - RJ</p>
-            <p style={{ margin: '0' }}>Brasil - CEP: 28.200-000</p>
+          <div>
+            <p className="font-bold">Base Operacional | Porto do Açu</p>
+            <p>Via 5 Projetada, Lote A12 -</p>
+            <p>Distrito Industrial - São João da Barra - RJ - Brasil</p>
+            <p>CEP: 28.200-000</p>
           </div>
-          <div style={{ width: '24%', textAlign: 'center' }}>
-            <p style={{ margin: '0 0 1px 0' }}>Tel: (+55 21) 2596-6262</p>
-            <p style={{ margin: '0 0 1px 0' }}>contato@supplymarine.com.br</p>
-            <p style={{ margin: '0 0 1px 0' }}>supplymarine.com.br</p>
-            <p style={{ margin: '0 0 1px 0' }}>Supply marine Serviços Ltda</p>
-            <p style={{ margin: '0 0 1px 0' }}>CNPJ: 03.513.274/0001-95</p>
-            <p style={{ margin: '0' }}>I.E.: 77.009.817</p>
+          <div className="text-right">
+            <p>Tel: (+55 21) 2596-6262</p>
+            <p>contato@supplymarine.com.br</p>
+            <p>supplymarine.com.br</p>
+            <p>Supply marine Serviços Ltda</p>
+            <p>CNPJ: 03.513.274/0001-95</p>
+            <p>I.E.: 77.009.817</p>
           </div>
         </div>
       </div>

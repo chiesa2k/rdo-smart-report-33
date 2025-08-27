@@ -1,3 +1,4 @@
+import '@/index.css'; // Import tailwind styles
 import { RDOFormData } from './rdo-storage';
 import { RdoPdfTemplate } from '@/components/RdoPdfTemplate';
 import { jsPDF } from 'jspdf';
@@ -15,27 +16,22 @@ const readAsDataURL = (file: File): Promise<string> => {
 };
 
 export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => {
-  // 1. Create a temporary container
   const container = document.createElement('div');
   document.body.appendChild(container);
 
-  // 2. Read photos and get their data URLs for the template
   const photoPreviews = await Promise.all(draftData.photos.map(readAsDataURL));
-
-  // 3. Render the React component into the container
   const root = createRoot(container);
-  root.render(<RdoPdfTemplate formData={draftData} previewImages={photoPreviews} />);
 
-  // Add a small delay to ensure the content is painted before canvas capture
-  await new Promise(resolve => setTimeout(resolve, 500));
+  // Await rendering
+  await new Promise<void>(resolve => {
+      root.render(<RdoPdfTemplate formData={draftData} previewImages={photoPreviews} />, () => {
+          setTimeout(resolve, 500); // Ensure paint
+      });
+  });
 
-  // 4. Generate PDF from the rendered HTML
   const pdf = new jsPDF('p', 'mm', 'a4');
-  const templateElement = container.firstElementChild as HTMLElement;
-
-  if (!templateElement) {
-    throw new Error("PDF template element not found");
-  }
+  const templateElement = container.querySelector('#pdf-template') as HTMLElement;
+  if (!templateElement) throw new Error("PDF template element not found");
 
   const headerElement = templateElement.querySelector('#rdo-header') as HTMLElement;
   const mainContentElement = templateElement.querySelector('#rdo-main-content') as HTMLElement;
@@ -48,36 +44,88 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
 
   const pageWidth = 210;
   const pageHeight = 297;
+  const margin = 15;
+  const contentWidth = pageWidth - (margin * 2);
 
-  const headerCanvas = await html2canvas(headerElement, { scale: 2, useCORS: true });
-  const headerImgData = headerCanvas.toDataURL('image/png');
-  const headerHeight = (headerCanvas.height * pageWidth) / headerCanvas.width;
+  const toCanvas = (el: HTMLElement) => html2canvas(el, { scale: 2, useCORS: true, allowTaint: true });
 
-  const footerCanvas = await html2canvas(footerElement, { scale: 2, useCORS: true });
-  const footerImgData = footerCanvas.toDataURL('image/png');
-  const footerHeight = (footerCanvas.height * pageWidth) / footerCanvas.width;
+  const headerCanvas = await toCanvas(headerElement);
+  const headerImgData = headerCanvas.toDataURL('image/png', 1.0);
+  const headerHeight = (headerCanvas.height * contentWidth) / headerCanvas.width;
 
-  const signatureCanvas = await html2canvas(signatureElement, { scale: 2, useCORS: true });
-  const signatureImgData = signatureCanvas.toDataURL('image/png');
-  const signatureHeight = (signatureCanvas.height * pageWidth) / signatureCanvas.width;
+  const footerCanvas = await toCanvas(footerElement);
+  const footerImgData = footerCanvas.toDataURL('image/png', 1.0);
+  const footerHeight = (footerCanvas.height * pageWidth) / footerCanvas.width; // Footer is full width
 
-  // ... (The complex multi-page logic from the original form)
-  // For simplicity here, we'll do a single-page version.
-  // The full logic should be copied here for a complete implementation.
-  const mainCanvas = await html2canvas(mainContentElement, { scale: 2, useCORS: true });
-  const mainImgData = mainCanvas.toDataURL('image/png');
-  const mainHeight = (mainCanvas.height * pageWidth) / mainCanvas.width;
+  const signatureCanvas = await toCanvas(signatureElement);
+  const signatureImgData = signatureCanvas.toDataURL('image/png', 1.0);
+  const signatureHeight = (signatureCanvas.height * contentWidth) / signatureCanvas.width;
 
-  pdf.addImage(headerImgData, 'PNG', 0, 0, pageWidth, headerHeight);
-  pdf.addImage(mainImgData, 'PNG', 15, headerHeight, pageWidth - 30, mainHeight);
-  pdf.addImage(signatureImgData, 'PNG', 15, headerHeight + mainHeight + 5, pageWidth - 30, signatureHeight);
-  pdf.addImage(footerImgData, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight);
+  const mainCanvas = await toCanvas(mainContentElement);
+  const mainImgData = mainCanvas.toDataURL('image/png', 1.0);
+  const mainContentTotalHeight = (mainCanvas.height * contentWidth) / mainCanvas.width;
 
+  const availablePageHeight = pageHeight - headerHeight - footerHeight - (margin * 2);
 
-  // 5. Unmount the component and remove the container
+  let contentProcessedY = 0;
+  let pageCount = 0;
+
+  // Add pages for the main content
+  while (contentProcessedY < mainContentTotalHeight) {
+    pageCount++;
+    pdf.addPage();
+    pdf.addImage(headerImgData, 'PNG', margin, margin, contentWidth, headerHeight);
+
+    const cropY = contentProcessedY;
+    const cropHeight = Math.min(mainContentTotalHeight - contentProcessedY, availablePageHeight);
+
+    const pageCanvas = document.createElement('canvas');
+    pageCanvas.width = mainCanvas.width;
+    pageCanvas.height = (cropHeight * mainCanvas.width) / contentWidth;
+    const pageCtx = pageCanvas.getContext('2d');
+
+    if (pageCtx) {
+      pageCtx.drawImage(
+        mainCanvas,
+        0, // sourceX
+        (cropY * mainCanvas.width) / contentWidth, // sourceY
+        mainCanvas.width, // sourceWidth
+        pageCanvas.height, // sourceHeight
+        0, // destX
+        0, // destY
+        pageCanvas.width, // destWidth
+        pageCanvas.height // destHeight
+      );
+      const pageImgData = pageCanvas.toDataURL('image/png', 1.0);
+      pdf.addImage(pageImgData, 'PNG', margin, margin + headerHeight, contentWidth, cropHeight);
+    }
+
+    contentProcessedY += cropHeight;
+    pdf.addImage(footerImgData, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight);
+  }
+
+  // Remove the blank first page that jsPDF adds by default
+  pdf.deletePage(1);
+
+  // Add the signature block to the last page
+  const lastPageContentHeight = (contentProcessedY % availablePageHeight) || availablePageHeight;
+  const spaceLeftOnLastPage = availablePageHeight - lastPageContentHeight;
+
+  pdf.setPage(pageCount); // Go to the last page
+
+  if (spaceLeftOnLastPage > signatureHeight + 5) {
+    // There's enough space on the last page of content
+    pdf.addImage(signatureImgData, 'PNG', margin, margin + headerHeight + lastPageContentHeight + 5, contentWidth, signatureHeight);
+  } else {
+    // Not enough space, add a new page just for signatures
+    pdf.addPage();
+    pdf.addImage(headerImgData, 'PNG', margin, margin, contentWidth, headerHeight);
+    pdf.addImage(signatureImgData, 'PNG', margin, margin + headerHeight + 5, contentWidth, signatureHeight);
+    pdf.addImage(footerImgData, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight);
+  }
+
   root.unmount();
   document.body.removeChild(container);
 
-  // 6. Return the PDF as a Blob
   return pdf.output('blob');
 };

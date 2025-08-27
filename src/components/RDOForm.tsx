@@ -114,7 +114,10 @@ export const RDOForm = ({ initialData, onSave }: RDOFormProps) => {
     setIsSaving(true);
     try {
       const savedDraft = await saveRdoDraft(user.id, formData);
-      setFormData(prev => ({...prev, id: savedDraft.id}));
+      // Only update state with the new ID if it's the first save
+      if (!formData.id && savedDraft.id) {
+        setFormData(prev => ({ ...prev, id: savedDraft.id }));
+      }
       if (!isAutoSave) {
           toast.success("Draft saved!");
       }

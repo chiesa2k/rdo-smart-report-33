@@ -22,13 +22,12 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
   const photoPreviews = await Promise.all(draftData.photos.map(readAsDataURL));
   const root = createRoot(container);
 
-  // Await rendering
-  await new Promise<void>(resolve => {
-      root.render(<RdoPdfTemplate formData={draftData} previewImages={photoPreviews} />, () => {
-          // Increased timeout to ensure all images have time to load and render
-          setTimeout(resolve, 1500);
-      });
-  });
+  // Render the component. The second argument callback is deprecated in React 18.
+  root.render(<RdoPdfTemplate formData={draftData} previewImages={photoPreviews} />);
+
+  // We must await a timeout to allow React to render and the browser to paint/load images
+  // before we attempt to capture it with html2canvas.
+  await new Promise(resolve => setTimeout(resolve, 1500));
 
   const pdf = new jsPDF('p', 'mm', 'a4');
   const templateElement = container.querySelector('#pdf-template') as HTMLElement;

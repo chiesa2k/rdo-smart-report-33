@@ -25,7 +25,8 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
   // Await rendering
   await new Promise<void>(resolve => {
       root.render(<RdoPdfTemplate formData={draftData} previewImages={photoPreviews} />, () => {
-          setTimeout(resolve, 500); // Ensure paint
+          // Increased timeout to ensure all images have time to load and render
+          setTimeout(resolve, 1500);
       });
   });
 

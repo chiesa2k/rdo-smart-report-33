@@ -6,12 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { RDOFormData, getAllRdoDrafts } from '@/services/rdo-storage';
 import { toast } from 'sonner';
+import { generatePdfBlob } from '@/services/pdf-generator.tsx';
 
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
   const isOnline = useOnlineStatus();
   const [allDrafts, setAllDrafts] = useState<RDOFormData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState<string | null>(null);
 
   useEffect(() => {
     // In a real app, this would be a secure API call.
@@ -44,6 +46,26 @@ const AdminDashboard = () => {
 
     fetchAllDrafts();
   }, [user, isOnline]);
+
+  const handleViewDetails = async (draft: RDOFormData) => {
+    if (!isOnline) {
+      toast.error("You must be online to generate a PDF.");
+      return;
+    }
+    setIsGeneratingPdf(draft.id);
+    toast.info(`Generating PDF for ${draft.reportNumber}...`);
+    try {
+      const blob = await generatePdfBlob(draft);
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      // No need to revoke, as the new tab needs the object URL
+    } catch (error) {
+      toast.error(`Failed to generate PDF: ${error.message}`);
+      console.error(error);
+    } finally {
+      setIsGeneratingPdf(null);
+    }
+  };
 
   return (
     <div className="container mx-auto p-4">
@@ -87,7 +109,14 @@ const AdminDashboard = () => {
                       <TableCell className="text-sm text-muted-foreground">{draft.userId}</TableCell>
                       <TableCell>{new Date(draft.updatedAt).toLocaleString()}</TableCell>
                       <TableCell>
-                        <Button variant="outline" size="sm">View Details</Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewDetails(draft)}
+                          disabled={isGeneratingPdf === draft.id}
+                        >
+                          {isGeneratingPdf === draft.id ? 'Generating...' : 'View Details'}
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))

@@ -194,7 +194,7 @@ export const RDOForm = ({ initialData, onSave }: RDOFormProps) => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center mb-6">
         <img
           src="/lovable-uploads/9af83693-c9fd-4eed-a0ad-1331f324d077.png"
           alt="Supply Marine Logo"
@@ -222,58 +222,148 @@ export const RDOForm = ({ initialData, onSave }: RDOFormProps) => {
         <CardContent className="p-6 space-y-6">
           {/* Basic Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="reportNumber">Relatório Diário / Daily Report Nº</Label>
-                <Input id="reportNumber" value={formData.reportNumber} onChange={(e) => handleInputChange("reportNumber", e.target.value)} />
-              </div>
-              <div>
-                <Label htmlFor="date">Data / Date</Label>
-                <Input id="date" type="date" value={formData.date} onChange={(e) => handleInputChange("date", e.target.value)} />
-              </div>
-              <div>
-                <Label htmlFor="serviceOrderNumber">Ordem de Serviço Nº / Service Number</Label>
-                <Input id="serviceOrderNumber" value={formData.serviceOrderNumber} onChange={(e) => handleInputChange("serviceOrderNumber", e.target.value)} />
-              </div>
-              <div>
-                <Label htmlFor="attendanceTime">Horário de Atendimento / Time of Attendance</Label>
-                <Input id="attendanceTime" value={formData.attendanceTime} onChange={(e) => handleInputChange("attendanceTime", e.target.value)} />
-              </div>
+            <div>
+              <Label htmlFor="reportNumber">Relatório Diário / Daily Report Nº</Label>
+              <Input id="reportNumber" value={formData.reportNumber} onChange={(e) => handleInputChange("reportNumber", e.target.value)} placeholder="Insira a informação aqui" />
+            </div>
+            <div>
+              <Label htmlFor="date">Data / Date</Label>
+              <Input id="date" type="date" value={formData.date} onChange={(e) => handleInputChange("date", e.target.value)} />
+            </div>
+            <div>
+              <Label htmlFor="serviceOrderNumber">Ordem de Serviço Nº / Service Number</Label>
+              <Input id="serviceOrderNumber" value={formData.serviceOrderNumber} onChange={(e) => handleInputChange("serviceOrderNumber", e.target.value)} placeholder="Insira a informação aqui" />
+            </div>
+            <div>
+              <Label htmlFor="attendanceTime">Horário de Atendimento / Time of Attendance</Label>
+              <Input id="attendanceTime" value={formData.attendanceTime} onChange={(e) => handleInputChange("attendanceTime", e.target.value)} placeholder="De/From: 07:00 - Até/To: 02:00" />
+            </div>
           </div>
-          {/* Client Info, Purpose, Equipment, etc. all go here... */}
+
+          {/* Client Info */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="customer">Cliente / Customer</Label>
+              <Input id="customer" value={formData.customer} onChange={(e) => handleInputChange("customer", e.target.value)} placeholder="Insira a informação aqui" />
+            </div>
+            <div>
+              <Label htmlFor="vessel">Embarcação / Vessel</Label>
+              <Input id="vessel" value={formData.vessel} onChange={(e) => handleInputChange("vessel", e.target.value)} placeholder="Insira a informação aqui" />
+            </div>
+            <div>
+              <Label htmlFor="location">Local de Atendimento / Location</Label>
+              <Input id="location" value={formData.location} onChange={(e) => handleInputChange("location", e.target.value)} placeholder="Insira a informação aqui" />
+            </div>
+            <div>
+              <Label htmlFor="requestor">Solicitante / Requestor</Label>
+              <Input id="requestor" value={formData.requestor} onChange={(e) => handleInputChange("requestor", e.target.value)} placeholder="Insira a informação aqui" />
+            </div>
+          </div>
+
+          {/* Purpose */}
+          <div>
+            <Label htmlFor="purpose">Objeto / Purpose</Label>
+            <Textarea id="purpose" value={formData.purpose} onChange={(e) => handleInputChange("purpose", e.target.value)} placeholder="Descrição do objeto/propósito do serviço" rows={2} />
+          </div>
+
+          {/* Equipment Info */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <Label htmlFor="equipment">Equipamento - Sistema / Equipment - System</Label>
+              <Input id="equipment" value={formData.equipment} onChange={(e) => handleInputChange("equipment", e.target.value)} placeholder="Insira a informação aqui" />
+            </div>
+            <div>
+              <Label htmlFor="manufacturer">Fabricante / Manufacturer</Label>
+              <Input id="manufacturer" value={formData.manufacturer} onChange={(e) => handleInputChange("manufacturer", e.target.value)} placeholder="NA" />
+            </div>
+            <div>
+              <Label htmlFor="model">Modelo / Model</Label>
+              <Input id="model" value={formData.model} onChange={(e) => handleInputChange("model", e.target.value)} placeholder="NA" />
+            </div>
+            <div>
+              <Label htmlFor="serialNumber">Serial Nº</Label>
+              <Input id="serialNumber" value={formData.serialNumber} onChange={(e) => handleInputChange("serialNumber", e.target.value)} placeholder="NA" />
+            </div>
+          </div>
+
           {/* Team Members */}
           <div>
             <Label className="text-lg font-semibold">Equipe / Team</Label>
             <div className="space-y-4 mt-2">
               {formData.teamMembers.map((member, index) => (
                 <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border rounded-lg">
-                  {/* ... inputs for team members ... */}
+                  <div>
+                    <Label>Registro / Register</Label>
+                    <Input value={member.register} onChange={(e) => handleTeamMemberChange(index, "register", e.target.value)} placeholder="Insira a informação aqui" />
+                  </div>
+                  <div>
+                    <Label>Funcionário / Worker</Label>
+                    <Input value={member.worker} onChange={(e) => handleTeamMemberChange(index, "worker", e.target.value)} placeholder="Insira a informação aqui" />
+                  </div>
+                  <div>
+                    <Label>Função / Position</Label>
+                    <Input value={member.position} onChange={(e) => handleTeamMemberChange(index, "position", e.target.value)} placeholder="TEC. SÊNIOR HVAC-R" />
+                  </div>
+                  <div>
+                    <Label>Assinatura / Signature</Label>
+                    <Input value={member.signature} onChange={(e) => handleTeamMemberChange(index, "signature", e.target.value)} placeholder="Assinatura" />
+                  </div>
                 </div>
               ))}
             </div>
           </div>
+
           {/* Service Report */}
           <div>
-              <div className="flex items-center justify-between mb-2">
-                <Label htmlFor="serviceReport" className="text-lg font-semibold">Relatório de Serviço / Service Report</Label>
-                <div className="flex gap-2">
-                  <Button type="button" variant="outline" size="sm" onClick={startSpeechRecognition} disabled={!isOnline || isListening}>
-                    <Mic className="h-4 w-4" /> {isListening ? 'Gravando...' : 'Falar'}
-                  </Button>
-                  <Button type="button" variant="outline" size="sm" onClick={() => enhanceTextWithAI(formData.serviceReport)} disabled={isEnhancing || !isOnline}>
-                    <FileText className="h-4 w-4" /> {isEnhancing ? 'Melhorando...' : 'Melhorar com IA'}
-                  </Button>
-                </div>
+            <div className="flex items-center justify-between mb-2">
+              <Label htmlFor="serviceReport" className="text-lg font-semibold">Relatório de Serviço / Service Report</Label>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={startSpeechRecognition} disabled={!isOnline || isListening}>
+                  <Mic className="h-4 w-4 mr-2" /> {isListening ? 'Gravando...' : 'Falar'}
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => enhanceTextWithAI(formData.serviceReport)} disabled={isEnhancing || !formData.serviceReport.trim() || !isOnline}>
+                  <FileText className="h-4 w-4 mr-2" /> {isEnhancing ? 'Melhorando...' : 'Melhorar com IA'}
+                </Button>
               </div>
-              <Textarea id="serviceReport" value={formData.serviceReport} onChange={(e) => handleInputChange("serviceReport", e.target.value)} rows={6} />
+            </div>
+            <Textarea id="serviceReport" value={formData.serviceReport} onChange={(e) => handleInputChange("serviceReport", e.target.value)} placeholder="Descreva o trabalho executado..." rows={6} />
           </div>
+
           {/* Photo Upload */}
           <div>
             <Label className="text-lg font-semibold">Fotos do Serviço</Label>
-            {/* ... photo upload button and preview grid ... */}
+            <div className="mt-2 space-y-4">
+              <div className="flex items-center gap-4">
+                <Button type="button" variant="outline" onClick={() => document.getElementById('photo-upload')?.click()}>
+                  <Camera className="h-4 w-4 mr-2" /> Adicionar Fotos
+                </Button>
+                <input id="photo-upload" type="file" accept="image/*" multiple onChange={handlePhotoUpload} className="hidden" />
+              </div>
+              {previewImages.length > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {previewImages.map((src, index) => (
+                    <div key={index} className="relative group">
+                      <img src={src} alt={`Foto ${index + 1}`} className="w-full h-32 object-cover rounded-lg border" />
+                      <button onClick={() => removePhoto(index)} className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 leading-none opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
+
           {/* Final Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* ... final location and signature inputs ... */}
+            <div>
+              <Label htmlFor="finalLocation">Local e Data / Location and Date</Label>
+              <Input id="finalLocation" value={formData.finalLocation} onChange={(e) => handleInputChange("finalLocation", e.target.value)} placeholder="RIO DE JANEIRO 09-04-2025" />
+            </div>
+            <div>
+              <Label htmlFor="technicianSignature">Assinatura do Técnico Responsável / Technician's Signature</Label>
+              <Input id="technicianSignature" value={formData.technicianSignature} onChange={(e) => handleInputChange("technicianSignature", e.target.value)} placeholder="Assinatura do técnico" />
+            </div>
           </div>
 
           <div className="flex gap-4 pt-6">

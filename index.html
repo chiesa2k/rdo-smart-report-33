@@ -19,6 +19,21 @@
 
   <body>
     <div id="root"></div>
+    <script>
+      // Redirect support for GitHub Pages SPA
+      (function () {
+        var redirect = sessionStorage.getItem("gh_redirect");
+        if (redirect) {
+          var data = JSON.parse(redirect);
+          sessionStorage.removeItem("gh_redirect");
+          if (data && data.path) {
+            var url = new URL(window.location);
+            url.pathname = data.path;
+            history.replaceState(null, null, url);
+          }
+        }
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

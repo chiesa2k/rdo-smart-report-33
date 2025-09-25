@@ -143,6 +143,20 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
               <tr>
                 <td colSpan={4} className="border border-black p-2 align-top h-[100mm]">
                   <div className="whitespace-pre-wrap">{val(formData.serviceReport)}</div>
+                  {previewImages.length > 0 && (
+                    <div className="mt-4 grid grid-cols-3 gap-4">
+                      {previewImages.map((src, index) => (
+                        <div key={index} className="text-center">
+                          <img
+                            src={src}
+                            alt={`Foto ${index + 1}`}
+                            className="w-full h-auto object-contain border border-black"
+                          />
+                          <p className="text-[7pt] font-bold mt-1">Foto {index + 1}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </td>
               </tr>
             </tbody>

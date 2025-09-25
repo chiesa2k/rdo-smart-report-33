@@ -344,6 +344,9 @@ export const RDOForm = ({ initialData, onSave }: RDOFormProps) => {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {previewImages.map((src, index) => (
                     <div key={index} className="relative group">
+                      <div className="absolute -top-2 -left-2 bg-blue-600 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center shadow">
+                        {index + 1}
+                      </div>
                       <img src={src} alt={`Foto ${index + 1}`} className="w-full h-32 object-cover rounded-lg border" />
                       <button onClick={() => removePhoto(index)} className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 leading-none opacity-0 group-hover:opacity-100 transition-opacity">
                         <Trash2 className="h-3 w-3" />

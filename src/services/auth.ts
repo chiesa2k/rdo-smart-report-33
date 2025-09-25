@@ -24,8 +24,10 @@ export const login = async (username, password): Promise<Session | null> => {
     admin: { id: 'admin-456', username: 'admin', role: 'admin', password: 'admin' },
   };
 
-  const user = users[username];
-  if (user && user.password === password) {
+  const key = String(username || '').trim().toLowerCase();
+  const providedPassword = String(password || '').trim();
+  const user = users[key];
+  if (user && user.password === providedPassword) {
     const session: Session = {
       user: {
         id: user.id,

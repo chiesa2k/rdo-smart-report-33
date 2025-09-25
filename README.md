@@ -4,6 +4,12 @@
 
 Aplicação para criação de Relatório Diário de Obra (RDO), com geração de PDF e armazenamento local de rascunhos. Deploy automático via GitHub Actions para GitHub Pages.
 
+## Links rápidos
+
+- Formulário (Index): https://chiesa2k.github.io/rdo-smart-report-33/
+- Login: https://chiesa2k.github.io/rdo-smart-report-33/login
+- Admin: https://chiesa2k.github.io/rdo-smart-report-33/admin
+
 ## Project info
 
 **URL**: https://lovable.dev/projects/0893dbdf-52a1-4d7f-ae51-0a6fee0f40a7

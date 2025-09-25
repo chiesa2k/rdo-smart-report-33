@@ -24,7 +24,7 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
               src={`https://i.imgur.com/S1FfyjQ.png`}
               crossOrigin="anonymous"
               alt="Supply Marine"
-              className="max-h-[14mm] w-auto object-contain"
+              className="h-[15mm] object-contain"
             />
           </div>
           <div className="text-center">
@@ -147,26 +147,7 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
               </tr>
             </tbody>
           </table>
-          {/* Photos moved to dedicated section to avoid page-splitting */}
-          {previewImages.length > 0 && (
-            <div id="rdo-photos" className="mt-2">
-              <table className="w-full border-collapse border border-black">
-                <thead>
-                  <tr className="text-center font-bold" style={{ backgroundColor: '#D9E2F3' }}>
-                    <td className="border border-black p-1">Fotos do Serviço</td>
-                  </tr>
-                </thead>
-              </table>
-              <div className="mt-2 grid grid-cols-3 gap-2">
-                {previewImages.map((src, index) => (
-                  <div key={index} className="photo-card text-center border border-black p-1">
-                    <img src={src} alt={`Foto ${index + 1}`} className="w-full h-auto object-contain" />
-                    <p className="text-[7pt] font-bold mt-1">Foto {index + 1}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          
         </div>
 
         {/* Signatures Section */}

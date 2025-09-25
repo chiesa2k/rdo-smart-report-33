@@ -21,7 +21,7 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
         <div id="rdo-header" className="flex justify-between items-start mb-2">
           <div className="w-[40mm]">
             <img
-              src="/lovable-uploads/supplymarine.png"
+              src={`${import.meta.env.BASE_URL}lovable-uploads/supplymarine.png`}
               alt="Supply Marine"
               className="h-[15mm] object-contain"
             />

@@ -1,10 +1,14 @@
-# Welcome to your Lovable project
+# RDO Supply Marine - Relatório Diário de Obra
+
+[![Deploy to GitHub Pages](https://github.com/chiesa2k/rdo-smart-report-33/actions/workflows/deploy.yml/badge.svg)](https://github.com/chiesa2k/rdo-smart-report-33/actions/workflows/deploy.yml)
+
+Aplicação para criação de Relatório Diário de Obra (RDO), com geração de PDF e armazenamento local de rascunhos. Deploy automático via GitHub Actions para GitHub Pages.
 
 ## Project info
 
 **URL**: https://lovable.dev/projects/0893dbdf-52a1-4d7f-ae51-0a6fee0f40a7
 
-## How can I edit this code?
+## Como rodar localmente
 
 There are several ways of editing your application.
 
@@ -16,25 +20,16 @@ Changes made via Lovable will be committed automatically to this repo.
 
 **Use your preferred IDE**
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+Requisitos: Node.js 20+ e npm.
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+git clone https://github.com/chiesa2k/rdo-smart-report-33.git
+cd rdo-smart-report-33
+npm install
 npm run dev
 ```
+
+O app estará em http://localhost:8080
 
 **Edit a file directly in GitHub**
 
@@ -60,9 +55,18 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
-## How can I deploy this project?
+## Deploy manual (opcional)
 
-Simply open [Lovable](https://lovable.dev/projects/0893dbdf-52a1-4d7f-ae51-0a6fee0f40a7) and click on Share -> Publish.
+O deploy automático via GitHub Actions já está configurado na branch `main`.
+
+Para publicar manualmente usando gh-pages CLI:
+
+```sh
+npm run build
+npx gh-pages -d dist
+```
+
+Certifique-se de que a origem do Pages está como “GitHub Actions” em Settings → Pages.
 
 ## Can I connect a custom domain to my Lovable project?
 

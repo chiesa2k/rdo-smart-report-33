@@ -1,6 +1,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Link } from 'react-router-dom';
 
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
@@ -12,7 +13,12 @@ const AdminDashboard = () => {
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
           <p className="text-muted-foreground">Welcome, {user?.username}.</p>
         </div>
-        <Button onClick={logout}>Logout</Button>
+        <div className="flex items-center gap-2">
+          <Link to="/">
+            <Button variant="secondary">Ir para Formulário</Button>
+          </Link>
+          <Button onClick={logout}>Logout</Button>
+        </div>
       </div>
 
       <Card>

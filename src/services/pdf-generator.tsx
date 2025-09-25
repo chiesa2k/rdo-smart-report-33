@@ -62,6 +62,16 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
   const mainCanvas = await toCanvas(mainContentElement);
   const mainContentTotalHeight = (mainCanvas.height * contentWidth) / mainCanvas.width;
 
+  // If there are photos, render them as independent, non-splittable blocks
+  const photosContainer = container.querySelector('#rdo-photos') as HTMLElement | null;
+  const photoCards = photosContainer ? Array.from(photosContainer.querySelectorAll('.photo-card')) as HTMLElement[] : [];
+  const photoCanvases = await Promise.all(photoCards.map(card => toCanvas(card)));
+  const photoBlocks = photoCanvases.map(c => ({
+    data: c.toDataURL('image/png', 1.0),
+    width: contentWidth,
+    height: (c.height * contentWidth) / c.width,
+  }));
+
   const availablePageHeight = pageHeight - headerHeight - footerHeight - (margin * 2);
 
   let contentProcessedY = 0;
@@ -103,14 +113,30 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
 
   pdf.setPage(pageCount);
 
-  if (spaceLeftOnLastPage > signatureHeight + 5) {
-    pdf.addImage(signatureImgData, 'PNG', margin, margin + headerHeight + lastPageContentHeight + 5, contentWidth, signatureHeight);
-  } else {
-    pdf.addPage();
-    pdf.addImage(headerImgData, 'PNG', margin, margin, contentWidth, headerHeight);
-    pdf.addImage(signatureImgData, 'PNG', margin, margin + headerHeight + 5, contentWidth, signatureHeight);
-    pdf.addImage(footerImgData, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight);
+  let currentY = margin + headerHeight + lastPageContentHeight + 5;
+
+  // Place photos one by one; if a photo doesn't fit, start a new page
+  for (const block of photoBlocks) {
+    if (currentY + block.height > pageHeight - footerHeight - margin) {
+      pdf.addPage();
+      pageCount++;
+      pdf.addImage(headerImgData, 'PNG', margin, margin, contentWidth, headerHeight);
+      pdf.addImage(footerImgData, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight);
+      currentY = margin + headerHeight + 5;
+    }
+    pdf.addImage(block.data, 'PNG', margin, currentY, contentWidth, block.height);
+    currentY += block.height + 4;
   }
+
+  // Place signatures at the end; if they don't fit, new page
+  if (currentY + signatureHeight > pageHeight - footerHeight - margin) {
+    pdf.addPage();
+    pageCount++;
+    pdf.addImage(headerImgData, 'PNG', margin, margin, contentWidth, headerHeight);
+    pdf.addImage(footerImgData, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight);
+    currentY = margin + headerHeight + 5;
+  }
+  pdf.addImage(signatureImgData, 'PNG', margin, currentY, contentWidth, signatureHeight);
 
   root.unmount();
   document.body.removeChild(container);

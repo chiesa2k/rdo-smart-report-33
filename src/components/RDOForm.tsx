@@ -196,8 +196,8 @@ export const RDOForm = ({ initialData, onSave }: RDOFormProps) => {
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex justify-between items-center mb-6">
         <img
-          src="/lovable-uploads/9af83693-c9fd-4eed-a0ad-1331f324d077.png"
-          alt="Supply Marine Logo"
+          src="/lovable-uploads/supplymarine.png"
+          alt="Supply Marine"
           className="h-24 object-contain"
         />
         <div className="text-right">

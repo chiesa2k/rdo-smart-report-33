@@ -20,6 +20,7 @@ export const login = async (username, password): Promise<Session | null> => {
   // Mock user database
   const users = {
     user: { id: 'user-123', username: 'user', role: 'user', password: 'user' },
+    teste: { id: 'user-789', username: 'teste', role: 'user', password: 'teste' },
     admin: { id: 'admin-456', username: 'admin', role: 'admin', password: 'admin' },
   };
 

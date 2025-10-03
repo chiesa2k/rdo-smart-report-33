@@ -42,9 +42,8 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
 
   const pageWidth = 210;
   const pageHeight = 297;
-  const marginX = 3;
-  const marginY = 3;
-  const contentWidth = pageWidth - (marginX * 2);
+  const margin = 15;
+  const contentWidth = pageWidth - (margin * 2);
 
   const toCanvas = (el: HTMLElement) => html2canvas(el, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: null });
 
@@ -65,7 +64,7 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
 
   // Legacy behavior: photos are part of the main content canvas
 
-  const availablePageHeight = pageHeight - headerHeight - footerHeight - (marginY * 2);
+  const availablePageHeight = pageHeight - headerHeight - footerHeight - (margin * 2);
 
   let contentProcessedY = 0;
   let pageCount = 0;
@@ -73,7 +72,7 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
   while (contentProcessedY < mainContentTotalHeight) {
     pageCount++;
     pdf.addPage();
-    pdf.addImage(headerImgData, 'PNG', marginX, marginY, contentWidth, headerHeight);
+    pdf.addImage(headerImgData, 'PNG', margin, margin, contentWidth, headerHeight);
 
     const cropY = contentProcessedY;
     const cropHeight = Math.min(mainContentTotalHeight - contentProcessedY, availablePageHeight);
@@ -92,7 +91,7 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
         pageCanvas.width, pageCanvas.height
       );
       const pageImgData = pageCanvas.toDataURL('image/png', 1.0);
-      pdf.addImage(pageImgData, 'PNG', marginX, marginY + headerHeight, contentWidth, cropHeight);
+      pdf.addImage(pageImgData, 'PNG', margin, margin + headerHeight, contentWidth, cropHeight);
     }
 
     contentProcessedY += cropHeight;
@@ -101,21 +100,31 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
 
   pdf.deletePage(1);
 
+  // Correctly calculate height of content on the last page, handling the edge case where content perfectly fills the page.
   const remainder = contentProcessedY % availablePageHeight;
-  const lastPageContentHeight = (contentProcessedY > availablePageHeight)
-    ? (remainder === 0 ? availablePageHeight : remainder)
-    : contentProcessedY;
-  const spaceLeftOnLastPage = availablePageHeight - lastPageContentHeight;
+  const lastPageContentHeight = (contentProcessedY > 0 && remainder === 0)
+    ? availablePageHeight
+    : remainder;
+
+  // Calculate the fixed Y position for the signature block, placing it just above the footer.
+  const signatureY = pageHeight - footerHeight - signatureHeight - margin;
+
+  // Calculate the Y position where the main content on the last page ends.
+  const contentEndY = margin + headerHeight + lastPageContentHeight;
 
   pdf.setPage(pageCount);
 
-  if (spaceLeftOnLastPage > signatureHeight + 5) {
-    pdf.addImage(signatureImgData, 'PNG', marginX, marginY + headerHeight + lastPageContentHeight + 5, contentWidth, signatureHeight);
-  } else {
+  // Check if the content on the last page overlaps with the fixed signature position.
+  // A 5mm buffer is added to prevent text from touching the signature block.
+  if (contentEndY + 5 > signatureY) {
+    // Overlap: create a new page for the signature.
     pdf.addPage();
-    pdf.addImage(headerImgData, 'PNG', marginX, marginY, contentWidth, headerHeight);
-    pdf.addImage(signatureImgData, 'PNG', marginX, marginY + headerHeight + 5, contentWidth, signatureHeight);
+    pdf.addImage(headerImgData, 'PNG', margin, margin, contentWidth, headerHeight);
+    pdf.addImage(signatureImgData, 'PNG', margin, signatureY, contentWidth, signatureHeight);
     pdf.addImage(footerImgData, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight);
+  } else {
+    // No overlap: add the signature to the last page at the calculated fixed position.
+    pdf.addImage(signatureImgData, 'PNG', margin, signatureY, contentWidth, signatureHeight);
   }
 
   root.unmount();

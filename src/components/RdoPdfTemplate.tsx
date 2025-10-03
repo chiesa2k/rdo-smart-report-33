@@ -47,7 +47,7 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
                 <td className="border border-black p-1">Ordem de Serviço N° / Service Number</td>
                 <td className="border border-black p-1">Horário de Atendimento / Time of Attendance</td>
               </tr>
-              <tr className="text-center h-[10mm]">
+              <tr className="text-center h-[8mm]">
                 <td className="border border-black p-1">{val(formData.reportNumber)}</td>
                 <td className="border border-black p-1">{val(formData.date)}</td>
                 <td className="border border-black p-1">{val(formData.serviceOrderNumber)}</td>
@@ -64,7 +64,7 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
                 <td className="border border-black p-1">Local de Atendimento / Location</td>
                 <td className="border border-black p-1">Solicitante / Requestor</td>
               </tr>
-              <tr className="text-center h-[10mm]">
+              <tr className="text-center h-[8mm]">
                 <td className="border border-black p-1">{val(formData.customer)}</td>
                 <td className="border border-black p-1">{val(formData.vessel)}</td>
                 <td className="border border-black p-1">{val(formData.location)}</td>
@@ -78,7 +78,7 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
               <tr className="text-center font-bold" style={{ backgroundColor: '#D9E2F3' }}>
                 <td className="border border-black p-1">Objeto / Purpose</td>
               </tr>
-              <tr className="h-[10mm]">
+              <tr className="h-[8mm]">
                 <td className="border border-black p-1">{val(formData.purpose)}</td>
               </tr>
             </tbody>
@@ -92,7 +92,7 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
                 <td className="border border-black p-1">Modelo / Model</td>
                 <td className="border border-black p-1">Serial N°</td>
               </tr>
-              <tr className="text-center h-[10mm]">
+              <tr className="text-center h-[8mm]">
                 <td className="border border-black p-1">{val(formData.equipment)}</td>
                 <td className="border border-black p-1">{val(formData.manufacturer)}</td>
                 <td className="border border-black p-1">{val(formData.model)}</td>
@@ -116,7 +116,7 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
             </thead>
             <tbody>
               {filledInMembers.map((member, index) => (
-                <tr key={index} className="text-center h-[10mm]">
+                <tr key={index} className="text-center h-[8mm]">
                   <td className="border border-black p-1">{index + 1}.</td>
                   <td className="border border-black p-1">{val(member.register)}</td>
                   <td className="border border-black p-1">{val(member.worker)}</td>
@@ -151,7 +151,7 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
                             <img
                               src={src}
                               alt={`Foto ${index + 1}`}
-                              className="w-full h-full object-cover"
+                              className="w-full h-full object-contain"
                             />
                           </div>
                           <p className="text-[7pt] font-bold mt-1">Foto {index + 1}</p>
@@ -175,7 +175,7 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
                 <td className="border border-black p-1 w-1/3">Assinatura do Técnico Responsável / Technician's Signature</td>
                 <td className="border border-black p-1 w-1/3">Serviço Concluído à Satisfação / Service Concluded Accordingly</td>
               </tr>
-              <tr className="text-center h-[15mm]">
+              <tr className="text-center h-[12mm]">
                 <td className="border border-black p-1">{val(formData.finalLocation)}</td>
                 <td className="border border-black p-1">{val(formData.technicianSignature)}</td>
                 <td className="border border-black p-1"></td>

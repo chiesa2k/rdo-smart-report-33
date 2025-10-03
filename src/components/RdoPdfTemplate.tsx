@@ -187,7 +187,7 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
       </div>
 
       {/* Footer Section */}
-      <div id="rdo-footer" className="absolute bottom-[3mm] left-[3mm] right-[3mm] text-[7pt] border-t-2 pt-1" style={{ borderColor: '#8FAADC' }}>
+      <div id="rdo-footer" className="absolute bottom-[3mm] left-[3mm] right-[3mm] text-[6pt] border-t-2 pt-1" style={{ borderColor: '#8FAADC' }}>
         <div className="flex justify-between text-center">
           <div>
             <p className="font-bold">Headquarter | Rio de Janeiro</p>

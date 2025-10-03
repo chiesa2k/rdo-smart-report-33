@@ -15,7 +15,7 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
 
   return (
     <div className="fixed -left-[9999px] w-[210mm] bg-white text-black" style={{ fontFamily: 'Arial, sans-serif' }}>
-      <div id="pdf-template" className="px-[3mm] py-[5mm] space-y-2 text-[8pt]">
+      <div id="pdf-template" className="px-[3mm] py-[3mm] space-y-2 text-[8pt]">
 
         {/* Header Section */}
         <div id="rdo-header" className="flex justify-between items-start mb-2">
@@ -187,7 +187,7 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
       </div>
 
       {/* Footer Section */}
-      <div id="rdo-footer" className="absolute bottom-[5mm] left-[3mm] right-[3mm] text-[7pt] border-t-2 pt-1" style={{ borderColor: '#8FAADC' }}>
+      <div id="rdo-footer" className="absolute bottom-[3mm] left-[3mm] right-[3mm] text-[7pt] border-t-2 pt-1" style={{ borderColor: '#8FAADC' }}>
         <div className="flex justify-between text-center">
           <div>
             <p className="font-bold">Headquarter | Rio de Janeiro</p>

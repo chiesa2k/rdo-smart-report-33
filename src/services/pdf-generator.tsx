@@ -42,7 +42,7 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
 
   const pageWidth = 210;
   const pageHeight = 297;
-  const margin = 15;
+  const margin = 10;
   const contentWidth = pageWidth - (margin * 2);
 
   const toCanvas = (el: HTMLElement) => html2canvas(el, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: null });
@@ -100,7 +100,10 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
 
   pdf.deletePage(1);
 
-  const lastPageContentHeight = (contentProcessedY > availablePageHeight) ? (contentProcessedY % availablePageHeight) : contentProcessedY;
+  const remainder = contentProcessedY % availablePageHeight;
+  const lastPageContentHeight = (contentProcessedY > availablePageHeight)
+    ? (remainder === 0 ? availablePageHeight : remainder)
+    : contentProcessedY;
   const spaceLeftOnLastPage = availablePageHeight - lastPageContentHeight;
 
   pdf.setPage(pageCount);

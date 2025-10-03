@@ -19,7 +19,7 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
 
         {/* Header Section */}
         <div id="rdo-header" className="flex justify-between items-start mb-2">
-          <div className="w-[40mm]">
+          <div className="w-[50mm]">
             <img
               src={`https://i.imgur.com/S1FfyjQ.png`}
               crossOrigin="anonymous"

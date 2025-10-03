@@ -15,23 +15,23 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
 
   return (
     <div className="fixed -left-[9999px] w-[210mm] bg-white text-black" style={{ fontFamily: 'Arial, sans-serif' }}>
-      <div id="pdf-template" className="p-[5mm] space-y-2 text-[8pt]">
+      <div id="pdf-template" className="px-[7mm] py-[10mm] space-y-2 text-[8pt]">
 
         {/* Header Section */}
         <div id="rdo-header" className="flex justify-between items-start mb-2">
-          <div className="w-[40mm]">
+          <div className="w-[30mm]">
             <img
               src={`https://i.imgur.com/S1FfyjQ.png`}
               crossOrigin="anonymous"
               alt="Supply Marine"
-              className="h-[15mm] object-contain"
+              className="h-[12mm] object-contain"
             />
           </div>
           <div className="text-center">
             <h1 className="font-bold text-[10pt]">RELATÓRIO DIÁRIO DE OBRA</h1>
             <p className="text-[7pt]">Daily Attendance Report</p>
           </div>
-          <div className="w-[40mm] text-right font-bold">
+          <div className="w-[30mm] text-right font-bold">
             <p>FR - EG - 001</p>
             <p>Rev: 00</p>
           </div>
@@ -187,7 +187,7 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
       </div>
 
       {/* Footer Section */}
-      <div id="rdo-footer" className="absolute bottom-[5mm] left-[5mm] right-[5mm] text-[7pt] border-t-2 pt-1" style={{ borderColor: '#8FAADC' }}>
+      <div id="rdo-footer" className="absolute bottom-[10mm] left-[7mm] right-[7mm] text-[7pt] border-t-2 pt-1" style={{ borderColor: '#8FAADC' }}>
         <div className="flex justify-between text-center">
           <div>
             <p className="font-bold">Headquarter | Rio de Janeiro</p>

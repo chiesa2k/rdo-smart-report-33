@@ -42,8 +42,9 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
 
   const pageWidth = 210;
   const pageHeight = 297;
-  const margin = 5;
-  const contentWidth = pageWidth - (margin * 2);
+  const marginX = 7;
+  const marginY = 10;
+  const contentWidth = pageWidth - (marginX * 2);
 
   const toCanvas = (el: HTMLElement) => html2canvas(el, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: null });
 
@@ -64,7 +65,7 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
 
   // Legacy behavior: photos are part of the main content canvas
 
-  const availablePageHeight = pageHeight - headerHeight - footerHeight - (margin * 2);
+  const availablePageHeight = pageHeight - headerHeight - footerHeight - (marginY * 2);
 
   let contentProcessedY = 0;
   let pageCount = 0;
@@ -72,7 +73,7 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
   while (contentProcessedY < mainContentTotalHeight) {
     pageCount++;
     pdf.addPage();
-    pdf.addImage(headerImgData, 'PNG', margin, margin, contentWidth, headerHeight);
+    pdf.addImage(headerImgData, 'PNG', marginX, marginY, contentWidth, headerHeight);
 
     const cropY = contentProcessedY;
     const cropHeight = Math.min(mainContentTotalHeight - contentProcessedY, availablePageHeight);
@@ -91,7 +92,7 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
         pageCanvas.width, pageCanvas.height
       );
       const pageImgData = pageCanvas.toDataURL('image/png', 1.0);
-      pdf.addImage(pageImgData, 'PNG', margin, margin + headerHeight, contentWidth, cropHeight);
+      pdf.addImage(pageImgData, 'PNG', marginX, marginY + headerHeight, contentWidth, cropHeight);
     }
 
     contentProcessedY += cropHeight;
@@ -109,11 +110,11 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
   pdf.setPage(pageCount);
 
   if (spaceLeftOnLastPage > signatureHeight + 5) {
-    pdf.addImage(signatureImgData, 'PNG', margin, margin + headerHeight + lastPageContentHeight + 5, contentWidth, signatureHeight);
+    pdf.addImage(signatureImgData, 'PNG', marginX, marginY + headerHeight + lastPageContentHeight + 5, contentWidth, signatureHeight);
   } else {
     pdf.addPage();
-    pdf.addImage(headerImgData, 'PNG', margin, margin, contentWidth, headerHeight);
-    pdf.addImage(signatureImgData, 'PNG', margin, margin + headerHeight + 5, contentWidth, signatureHeight);
+    pdf.addImage(headerImgData, 'PNG', marginX, marginY, contentWidth, headerHeight);
+    pdf.addImage(signatureImgData, 'PNG', marginX, marginY + headerHeight + 5, contentWidth, signatureHeight);
     pdf.addImage(footerImgData, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight);
   }
 

@@ -100,7 +100,10 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
 
   pdf.deletePage(1);
 
-  const lastPageContentHeight = (contentProcessedY > availablePageHeight) ? (contentProcessedY % availablePageHeight) : contentProcessedY;
+  const remainder = contentProcessedY % availablePageHeight;
+  const lastPageContentHeight = (contentProcessedY > availablePageHeight)
+    ? (remainder === 0 ? availablePageHeight : remainder)
+    : contentProcessedY;
   const spaceLeftOnLastPage = availablePageHeight - lastPageContentHeight;
 
   pdf.setPage(pageCount);

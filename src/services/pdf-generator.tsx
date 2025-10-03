@@ -42,7 +42,7 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
 
   const pageWidth = 210;
   const pageHeight = 297;
-  const margin = 15;
+  const margin = 10;
   const contentWidth = pageWidth - (margin * 2);
 
   const toCanvas = (el: HTMLElement) => html2canvas(el, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: null });

@@ -141,7 +141,7 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
             </thead>
             <tbody>
               <tr>
-                <td colSpan={4} className="border border-black p-2 align-top h-[100mm]">
+                <td colSpan={4} className="border border-black p-1 align-top h-[100mm]">
                   <div className="whitespace-pre-wrap">{val(formData.serviceReport)}</div>
                   {previewImages.length > 0 && (
                     <div className="mt-4 grid grid-cols-3 gap-4">

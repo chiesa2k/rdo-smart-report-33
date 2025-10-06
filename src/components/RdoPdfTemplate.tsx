@@ -37,8 +37,8 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
           </div>
         </div>
 
-        {/* Main Content Section - Flowable */}
-        <div id="rdo-flowable-content">
+        {/* Flowable Content Part 1: Initial Tables */}
+        <div id="rdo-flowable-content-1">
           <table className="w-full border-collapse border border-black">
             <tbody>
               <tr className="text-center font-bold" style={{ backgroundColor: '#D9E2F3' }}>
@@ -128,8 +128,8 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
           </table>
         </div>
 
-        {/* Unbreakable Content Section */}
-        <div id="rdo-unbreakable-content">
+        {/* Flowable Content Part 2: Service Report Text */}
+        <div id="rdo-flowable-content-2">
           <table className="w-full border-collapse border border-black mt-2">
             <thead>
               <tr className="text-center font-bold" style={{ backgroundColor: '#D9E2F3' }}>
@@ -144,48 +144,51 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
             </thead>
             <tbody>
               <tr>
-                <td colSpan={4} className="border border-black p-1 align-top h-[100mm]">
+                <td colSpan={4} className="border border-black p-1 align-top">
                   <div className="whitespace-pre-wrap">{val(formData.serviceReport)}</div>
-                  {previewImages.length > 0 && (
-                    <div className="mt-4 grid grid-cols-3 gap-4">
-                      {previewImages.map((src, index) => (
-                        <div key={index} className="text-center">
-                          <div className="aspect-[5/4] w-full border border-black">
-                            <img
-                              src={src}
-                              alt={`Foto ${index + 1}`}
-                              className="w-full h-full object-contain"
-                            />
-                          </div>
-                          <p className="text-[7pt] font-bold mt-1">Foto {index + 1}</p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </td>
               </tr>
             </tbody>
           </table>
-
-          {/* Signatures Section */}
-          <div id="rdo-signatures" className="pt-2">
-            <table className="w-full border-collapse border border-black mt-2">
-              <tbody>
-                <tr className="text-center font-bold" style={{ backgroundColor: '#D9E2F3' }}>
-                  <td className="border border-black p-1 w-1/3">Local e Data / Location and Date</td>
-                  <td className="border border-black p-1 w-1/3">Assinatura do Técnico Responsável / Technician's Signature</td>
-                  <td className="border border-black p-1 w-1/3">Serviço Concluído à Satisfação / Service Concluded Accordingly</td>
-                </tr>
-                <tr className="text-center h-[10mm]">
-                  <td className="border border-black p-1">{val(formData.finalLocation)}</td>
-                  <td className="border border-black p-1">{val(formData.technicianSignature)}</td>
-                  <td className="border border-black p-1"></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
         </div>
 
+        {/* Unbreakable Content Part 1: Image Grid */}
+        <div id="rdo-image-grid">
+          {previewImages.length > 0 && (
+            <div className="mt-4 grid grid-cols-3 gap-4">
+              {previewImages.map((src, index) => (
+                <div key={index} className="text-center">
+                  <div className="aspect-[5/4] w-full border border-black">
+                    <img
+                      src={src}
+                      alt={`Foto ${index + 1}`}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <p className="text-[7pt] font-bold mt-1">Foto {index + 1}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Unbreakable Content Part 2: Signatures Section */}
+        <div id="rdo-signatures" className="pt-2">
+          <table className="w-full border-collapse border border-black mt-2">
+            <tbody>
+              <tr className="text-center font-bold" style={{ backgroundColor: '#D9E2F3' }}>
+                <td className="border border-black p-1 w-1/3">Local e Data / Location and Date</td>
+                <td className="border border-black p-1 w-1/3">Assinatura do Técnico Responsável / Technician's Signature</td>
+                <td className="border border-black p-1 w-1/3">Serviço Concluído à Satisfação / Service Concluded Accordingly</td>
+              </tr>
+              <tr className="text-center h-[10mm]">
+                <td className="border border-black p-1">{val(formData.finalLocation)}</td>
+                <td className="border border-black p-1">{val(formData.technicianSignature)}</td>
+                <td className="border border-black p-1"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Footer Section */}

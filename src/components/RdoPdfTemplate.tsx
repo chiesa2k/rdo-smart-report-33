@@ -152,7 +152,6 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
                               src={src}
                               alt={`Foto ${index + 1}`}
                               className="w-full h-auto border border-black"
-                              style={{ maxHeight: '40mm' }}
                             />
                             <p className="text-[7pt] font-bold mt-1">Foto {index + 1}</p>
                           </div>

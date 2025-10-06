@@ -147,7 +147,7 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
                     {previewImages.length > 0 && (
                       <div className="mt-4 flex flex-wrap justify-around">
                         {previewImages.map((src, index) => (
-                          <div key={index} className="text-center p-1" style={{ maxWidth: '32%' }}>
+                          <div key={index} className="text-center p-1" style={{ maxWidth: '28%' }}>
                             <img
                               src={src}
                               alt={`Foto ${index + 1}`}

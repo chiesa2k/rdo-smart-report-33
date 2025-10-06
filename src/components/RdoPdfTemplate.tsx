@@ -37,8 +37,8 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
           </div>
         </div>
 
-        {/* Main Content Section */}
-        <div id="rdo-main-content">
+        {/* Main Content Section - Flowable */}
+        <div id="rdo-flowable-content">
           <table className="w-full border-collapse border border-black">
             <tbody>
               <tr className="text-center font-bold" style={{ backgroundColor: '#D9E2F3' }}>
@@ -126,7 +126,10 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
               ))}
             </tbody>
           </table>
+        </div>
 
+        {/* Unbreakable Content Section */}
+        <div id="rdo-unbreakable-content">
           <table className="w-full border-collapse border border-black mt-2">
             <thead>
               <tr className="text-center font-bold" style={{ backgroundColor: '#D9E2F3' }}>
@@ -163,25 +166,24 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
               </tr>
             </tbody>
           </table>
-          
-        </div>
 
-        {/* Signatures Section */}
-        <div id="rdo-signatures" className="pt-2">
-          <table className="w-full border-collapse border border-black">
-            <tbody>
-              <tr className="text-center font-bold" style={{ backgroundColor: '#D9E2F3' }}>
-                <td className="border border-black p-1 w-1/3">Local e Data / Location and Date</td>
-                <td className="border border-black p-1 w-1/3">Assinatura do Técnico Responsável / Technician's Signature</td>
-                <td className="border border-black p-1 w-1/3">Serviço Concluído à Satisfação / Service Concluded Accordingly</td>
-              </tr>
-              <tr className="text-center h-[10mm]">
-                <td className="border border-black p-1">{val(formData.finalLocation)}</td>
-                <td className="border border-black p-1">{val(formData.technicianSignature)}</td>
-                <td className="border border-black p-1"></td>
-              </tr>
-            </tbody>
-          </table>
+          {/* Signatures Section */}
+          <div id="rdo-signatures" className="pt-2">
+            <table className="w-full border-collapse border border-black mt-2">
+              <tbody>
+                <tr className="text-center font-bold" style={{ backgroundColor: '#D9E2F3' }}>
+                  <td className="border border-black p-1 w-1/3">Local e Data / Location and Date</td>
+                  <td className="border border-black p-1 w-1/3">Assinatura do Técnico Responsável / Technician's Signature</td>
+                  <td className="border border-black p-1 w-1/3">Serviço Concluído à Satisfação / Service Concluded Accordingly</td>
+                </tr>
+                <tr className="text-center h-[10mm]">
+                  <td className="border border-black p-1">{val(formData.finalLocation)}</td>
+                  <td className="border border-black p-1">{val(formData.technicianSignature)}</td>
+                  <td className="border border-black p-1"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
       </div>

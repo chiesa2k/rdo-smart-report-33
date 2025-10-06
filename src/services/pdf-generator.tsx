@@ -22,21 +22,19 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
   const photoPreviews = await Promise.all(draftData.photos.map(readAsDataURL));
   const root = createRoot(container);
 
-  // Render the component. The second argument callback is deprecated in React 18.
   root.render(<RdoPdfTemplate formData={draftData} previewImages={photoPreviews} />);
 
-  // We must await a timeout to allow React to render and the browser to paint/load images
   await new Promise(resolve => setTimeout(resolve, 1500));
 
   const pdf = new jsPDF('p', 'mm', 'a4');
 
-  // Select all parts from the top-level container to ensure they are all found
+  // Select all parts from the top-level container
   const headerElement = container.querySelector('#rdo-header') as HTMLElement;
-  const mainContentElement = container.querySelector('#rdo-main-content') as HTMLElement;
-  const signatureElement = container.querySelector('#rdo-signatures') as HTMLElement;
+  const flowableContentElement = container.querySelector('#rdo-flowable-content') as HTMLElement;
+  const unbreakableContentElement = container.querySelector('#rdo-unbreakable-content') as HTMLElement;
   const footerElement = container.querySelector('#rdo-footer') as HTMLElement;
 
-  if (!headerElement || !mainContentElement || !signatureElement || !footerElement) {
+  if (!headerElement || !flowableContentElement || !unbreakableContentElement || !footerElement) {
     throw new Error("Could not find all required elements in the PDF template.");
   }
 
@@ -48,6 +46,7 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
 
   const toCanvas = (el: HTMLElement) => html2canvas(el, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: null });
 
+  // Common elements
   const headerCanvas = await toCanvas(headerElement);
   const headerImgData = headerCanvas.toDataURL('image/png', 1.0);
   const headerHeight = (headerCanvas.height * contentWidth) / headerCanvas.width;
@@ -56,38 +55,33 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
   const footerImgData = footerCanvas.toDataURL('image/png', 1.0);
   const footerHeight = (footerCanvas.height * pageWidth) / footerCanvas.width;
 
-  const signatureCanvas = await toCanvas(signatureElement);
-  const signatureImgData = signatureCanvas.toDataURL('image/png', 1.0);
-  const signatureHeight = (signatureCanvas.height * contentWidth) / signatureCanvas.width;
-
-  const mainCanvas = await toCanvas(mainContentElement);
-  const mainContentTotalHeight = (mainCanvas.height * contentWidth) / mainCanvas.width;
-
-  // Legacy behavior: photos are part of the main content canvas
-
   const availablePageHeight = pageHeight - headerHeight - footerHeight - (marginY * 2);
+
+  // Process flowable content first
+  const flowableCanvas = await toCanvas(flowableContentElement);
+  const flowableContentTotalHeight = (flowableCanvas.height * contentWidth) / flowableCanvas.width;
 
   let contentProcessedY = 0;
   let pageCount = 0;
 
-  while (contentProcessedY < mainContentTotalHeight) {
+  while (contentProcessedY < flowableContentTotalHeight) {
     pageCount++;
     pdf.addPage();
     pdf.addImage(headerImgData, 'PNG', marginX, marginY, contentWidth, headerHeight);
 
     const cropY = contentProcessedY;
-    const cropHeight = Math.min(mainContentTotalHeight - contentProcessedY, availablePageHeight);
+    const cropHeight = Math.min(flowableContentTotalHeight - contentProcessedY, availablePageHeight);
 
     const pageCanvas = document.createElement('canvas');
-    pageCanvas.width = mainCanvas.width;
-    pageCanvas.height = (cropHeight * mainCanvas.width) / contentWidth;
+    pageCanvas.width = flowableCanvas.width;
+    pageCanvas.height = (cropHeight * flowableCanvas.width) / contentWidth;
     const pageCtx = pageCanvas.getContext('2d');
 
     if (pageCtx) {
       pageCtx.drawImage(
-        mainCanvas,
-        0, (cropY * mainCanvas.width) / contentWidth,
-        mainCanvas.width, pageCanvas.height,
+        flowableCanvas,
+        0, (cropY * flowableCanvas.width) / contentWidth,
+        flowableCanvas.width, pageCanvas.height,
         0, 0,
         pageCanvas.width, pageCanvas.height
       );
@@ -99,35 +93,39 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
     pdf.addImage(footerImgData, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight);
   }
 
-  pdf.deletePage(1);
+  // Now handle the unbreakable content
+  const unbreakableCanvas = await toCanvas(unbreakableContentElement);
+  const unbreakableContentHeight = (unbreakableCanvas.height * contentWidth) / unbreakableCanvas.width;
+  const unbreakableImgData = unbreakableCanvas.toDataURL('image/png', 1.0);
 
-  // Correctly calculate height of content on the last page, handling the edge case where content perfectly fills the page.
-  const remainder = contentProcessedY % availablePageHeight;
-  const lastPageContentHeight = (contentProcessedY > 0 && remainder === 0)
-    ? availablePageHeight
-    : remainder;
+  const lastFlowablePageHeight = (flowableContentTotalHeight > 0)
+    ? (flowableContentTotalHeight % availablePageHeight === 0 ? availablePageHeight : flowableContentTotalHeight % availablePageHeight)
+    : 0;
 
-  // Calculate the fixed Y position for the signature block, placing it just above the footer.
-  const signatureY = pageHeight - footerHeight - signatureHeight - marginY;
-
-  // Calculate the Y position where the main content on the last page ends.
-  const contentEndY = marginY + headerHeight + lastPageContentHeight;
-
-  pdf.setPage(pageCount);
-
-  // Check if the content on the last page overlaps with the fixed signature position.
-  // A 5mm buffer is added to prevent text from touching the signature block.
-  if (contentEndY + 5 > signatureY) {
-    // Overlap: create a new page for the signature.
+  if (pageCount === 0) {
+    // Flowable content was empty, this is the first page
+    pageCount++;
     pdf.addPage();
     pdf.addImage(headerImgData, 'PNG', marginX, marginY, contentWidth, headerHeight);
-    // Place the signature at the top of the new page, after the header.
-    pdf.addImage(signatureImgData, 'PNG', marginX, marginY + headerHeight + 5, contentWidth, signatureHeight);
+    pdf.addImage(unbreakableImgData, 'PNG', marginX, marginY + headerHeight, contentWidth, unbreakableContentHeight);
     pdf.addImage(footerImgData, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight);
   } else {
-    // No overlap: add the signature to the last page at the calculated fixed position.
-    pdf.addImage(signatureImgData, 'PNG', marginX, signatureY, contentWidth, signatureHeight);
+    // There was flowable content, check if unbreakable fits on the last page
+    const spaceLeft = availablePageHeight - lastFlowablePageHeight;
+    if (unbreakableContentHeight > spaceLeft) {
+      // Doesn't fit, add a new page
+      pageCount++;
+      pdf.addPage();
+      pdf.addImage(headerImgData, 'PNG', marginX, marginY, contentWidth, headerHeight);
+      pdf.addImage(unbreakableImgData, 'PNG', marginX, marginY + headerHeight, contentWidth, unbreakableContentHeight);
+      pdf.addImage(footerImgData, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight);
+    } else {
+      // Fits, add to the last page
+      pdf.addImage(unbreakableImgData, 'PNG', marginX, marginY + headerHeight + lastFlowablePageHeight, contentWidth, unbreakableContentHeight);
+    }
   }
+
+  pdf.deletePage(1); // Delete the initial blank page
 
   root.unmount();
   document.body.removeChild(container);

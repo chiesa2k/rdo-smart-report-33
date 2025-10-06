@@ -15,16 +15,16 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
 
   return (
     <div className="fixed -left-[9999px] w-[210mm] bg-white text-black" style={{ fontFamily: 'Arial, sans-serif' }}>
-      <div id="pdf-template" className="p-[15mm] space-y-2 text-[8pt]">
+      <div id="pdf-template" className="px-[3mm] py-[3mm] space-y-2 text-[8pt]">
 
         {/* Header Section */}
         <div id="rdo-header" className="flex justify-between items-start mb-2">
-          <div className="w-[40mm]">
+          <div className="w-[50mm]">
             <img
               src={`https://i.imgur.com/S1FfyjQ.png`}
               crossOrigin="anonymous"
               alt="Supply Marine"
-              className="h-[15mm] object-contain"
+              className="h-[12mm] object-contain"
             />
           </div>
           <div className="text-center">
@@ -47,7 +47,7 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
                 <td className="border border-black p-1">Ordem de Serviço N° / Service Number</td>
                 <td className="border border-black p-1">Horário de Atendimento / Time of Attendance</td>
               </tr>
-              <tr className="text-center h-[10mm]">
+              <tr className="text-center h-[6mm]">
                 <td className="border border-black p-1">{val(formData.reportNumber)}</td>
                 <td className="border border-black p-1">{val(formData.date)}</td>
                 <td className="border border-black p-1">{val(formData.serviceOrderNumber)}</td>
@@ -64,7 +64,7 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
                 <td className="border border-black p-1">Local de Atendimento / Location</td>
                 <td className="border border-black p-1">Solicitante / Requestor</td>
               </tr>
-              <tr className="text-center h-[10mm]">
+              <tr className="text-center h-[6mm]">
                 <td className="border border-black p-1">{val(formData.customer)}</td>
                 <td className="border border-black p-1">{val(formData.vessel)}</td>
                 <td className="border border-black p-1">{val(formData.location)}</td>
@@ -78,7 +78,7 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
               <tr className="text-center font-bold" style={{ backgroundColor: '#D9E2F3' }}>
                 <td className="border border-black p-1">Objeto / Purpose</td>
               </tr>
-              <tr className="h-[10mm]">
+              <tr className="h-[6mm]">
                 <td className="border border-black p-1">{val(formData.purpose)}</td>
               </tr>
             </tbody>
@@ -92,7 +92,7 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
                 <td className="border border-black p-1">Modelo / Model</td>
                 <td className="border border-black p-1">Serial N°</td>
               </tr>
-              <tr className="text-center h-[10mm]">
+              <tr className="text-center h-[6mm]">
                 <td className="border border-black p-1">{val(formData.equipment)}</td>
                 <td className="border border-black p-1">{val(formData.manufacturer)}</td>
                 <td className="border border-black p-1">{val(formData.model)}</td>
@@ -116,7 +116,7 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
             </thead>
             <tbody>
               {filledInMembers.map((member, index) => (
-                <tr key={index} className="text-center h-[10mm]">
+                <tr key={index} className="text-center h-[6mm]">
                   <td className="border border-black p-1">{index + 1}.</td>
                   <td className="border border-black p-1">{val(member.register)}</td>
                   <td className="border border-black p-1">{val(member.worker)}</td>
@@ -141,7 +141,7 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
             </thead>
             <tbody>
               <tr>
-                <td colSpan={4} className="border border-black p-2 align-top h-[100mm]">
+                <td colSpan={4} className="border border-black p-1 align-top h-[100mm]">
                   <div className="whitespace-pre-wrap">
                     {val(formData.serviceReport)}
                     {previewImages.length > 0 && (
@@ -175,7 +175,7 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
                 <td className="border border-black p-1 w-1/3">Assinatura do Técnico Responsável / Technician's Signature</td>
                 <td className="border border-black p-1 w-1/3">Serviço Concluído à Satisfação / Service Concluded Accordingly</td>
               </tr>
-              <tr className="text-center h-[15mm]">
+              <tr className="text-center h-[10mm]">
                 <td className="border border-black p-1">{val(formData.finalLocation)}</td>
                 <td className="border border-black p-1">{val(formData.technicianSignature)}</td>
                 <td className="border border-black p-1"></td>
@@ -187,7 +187,7 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
       </div>
 
       {/* Footer Section */}
-      <div id="rdo-footer" className="absolute bottom-[15mm] left-[15mm] right-[15mm] text-[7pt] border-t-2 pt-1" style={{ borderColor: '#8FAADC' }}>
+      <div id="rdo-footer" className="absolute bottom-[3mm] left-[3mm] right-[3mm] text-[6pt] border-t-2 pt-1" style={{ borderColor: '#8FAADC' }}>
         <div className="flex justify-between text-center">
           <div>
             <p className="font-bold">Headquarter | Rio de Janeiro</p>

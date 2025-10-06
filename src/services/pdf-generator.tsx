@@ -30,11 +30,13 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
 
   // Select all parts from the top-level container
   const headerElement = container.querySelector('#rdo-header') as HTMLElement;
-  const flowableContentElement = container.querySelector('#rdo-flowable-content') as HTMLElement;
-  const unbreakableContentElement = container.querySelector('#rdo-unbreakable-content') as HTMLElement;
+  const flowableContent1Element = container.querySelector('#rdo-flowable-content-1') as HTMLElement;
+  const flowableContent2Element = container.querySelector('#rdo-flowable-content-2') as HTMLElement;
+  const imageGridElement = container.querySelector('#rdo-image-grid') as HTMLElement;
+  const signatureElement = container.querySelector('#rdo-signatures') as HTMLElement;
   const footerElement = container.querySelector('#rdo-footer') as HTMLElement;
 
-  if (!headerElement || !flowableContentElement || !unbreakableContentElement || !footerElement) {
+  if (!headerElement || !flowableContent1Element || !flowableContent2Element || !imageGridElement || !signatureElement || !footerElement) {
     throw new Error("Could not find all required elements in the PDF template.");
   }
 
@@ -57,9 +59,19 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
 
   const availablePageHeight = pageHeight - headerHeight - footerHeight - (marginY * 2);
 
-  // Process flowable content first
-  const flowableCanvas = await toCanvas(flowableContentElement);
-  const flowableContentTotalHeight = (flowableCanvas.height * contentWidth) / flowableCanvas.width;
+  // Combine and process all flowable content
+  const flowable1Canvas = await toCanvas(flowableContent1Element);
+  const flowable2Canvas = await toCanvas(flowableContent2Element);
+  const combinedFlowableCanvas = document.createElement('canvas');
+  combinedFlowableCanvas.width = flowable1Canvas.width;
+  combinedFlowableCanvas.height = flowable1Canvas.height + flowable2Canvas.height;
+  const ctx = combinedFlowableCanvas.getContext('2d');
+  if (ctx) {
+    ctx.drawImage(flowable1Canvas, 0, 0);
+    ctx.drawImage(flowable2Canvas, 0, flowable1Canvas.height);
+  }
+
+  const flowableContentTotalHeight = (combinedFlowableCanvas.height * contentWidth) / combinedFlowableCanvas.width;
 
   let contentProcessedY = 0;
   let pageCount = 0;
@@ -73,15 +85,15 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
     const cropHeight = Math.min(flowableContentTotalHeight - contentProcessedY, availablePageHeight);
 
     const pageCanvas = document.createElement('canvas');
-    pageCanvas.width = flowableCanvas.width;
-    pageCanvas.height = (cropHeight * flowableCanvas.width) / contentWidth;
+    pageCanvas.width = combinedFlowableCanvas.width;
+    pageCanvas.height = (cropHeight * combinedFlowableCanvas.width) / contentWidth;
     const pageCtx = pageCanvas.getContext('2d');
 
     if (pageCtx) {
       pageCtx.drawImage(
-        flowableCanvas,
-        0, (cropY * flowableCanvas.width) / contentWidth,
-        flowableCanvas.width, pageCanvas.height,
+        combinedFlowableCanvas,
+        0, (cropY * combinedFlowableCanvas.width) / contentWidth,
+        combinedFlowableCanvas.width, pageCanvas.height,
         0, 0,
         pageCanvas.width, pageCanvas.height
       );
@@ -90,39 +102,46 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
     }
 
     contentProcessedY += cropHeight;
-    pdf.addImage(footerImgData, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight);
   }
 
-  // Now handle the unbreakable content
-  const unbreakableCanvas = await toCanvas(unbreakableContentElement);
-  const unbreakableContentHeight = (unbreakableCanvas.height * contentWidth) / unbreakableCanvas.width;
-  const unbreakableImgData = unbreakableCanvas.toDataURL('image/png', 1.0);
+  // Calculate remaining space on the last page
+  let lastPageHeightUsed = (flowableContentTotalHeight % availablePageHeight === 0 && flowableContentTotalHeight > 0)
+    ? availablePageHeight
+    : flowableContentTotalHeight % availablePageHeight;
 
-  const lastFlowablePageHeight = (flowableContentTotalHeight > 0)
-    ? (flowableContentTotalHeight % availablePageHeight === 0 ? availablePageHeight : flowableContentTotalHeight % availablePageHeight)
-    : 0;
-
-  if (pageCount === 0) {
-    // Flowable content was empty, this is the first page
-    pageCount++;
-    pdf.addPage();
-    pdf.addImage(headerImgData, 'PNG', marginX, marginY, contentWidth, headerHeight);
-    pdf.addImage(unbreakableImgData, 'PNG', marginX, marginY + headerHeight, contentWidth, unbreakableContentHeight);
-    pdf.addImage(footerImgData, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight);
-  } else {
-    // There was flowable content, check if unbreakable fits on the last page
-    const spaceLeft = availablePageHeight - lastFlowablePageHeight;
-    if (unbreakableContentHeight > spaceLeft) {
-      // Doesn't fit, add a new page
+  // Function to add a new page if needed
+  const addPageIfNeeded = (contentHeight) => {
+    const spaceLeft = availablePageHeight - lastPageHeightUsed;
+    if (contentHeight > spaceLeft) {
       pageCount++;
       pdf.addPage();
       pdf.addImage(headerImgData, 'PNG', marginX, marginY, contentWidth, headerHeight);
-      pdf.addImage(unbreakableImgData, 'PNG', marginX, marginY + headerHeight, contentWidth, unbreakableContentHeight);
-      pdf.addImage(footerImgData, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight);
-    } else {
-      // Fits, add to the last page
-      pdf.addImage(unbreakableImgData, 'PNG', marginX, marginY + headerHeight + lastFlowablePageHeight, contentWidth, unbreakableContentHeight);
+      lastPageHeightUsed = 0;
     }
+  };
+
+  // Add unbreakable blocks
+  const imageGridCanvas = await toCanvas(imageGridElement);
+  const imageGridHeight = (imageGridCanvas.height * contentWidth) / imageGridCanvas.width;
+  if (imageGridHeight > 0) {
+    addPageIfNeeded(imageGridHeight);
+    const imageGridImgData = imageGridCanvas.toDataURL('image/png', 1.0);
+    pdf.addImage(imageGridImgData, 'PNG', marginX, marginY + headerHeight + lastPageHeightUsed, contentWidth, imageGridHeight);
+    lastPageHeightUsed += imageGridHeight;
+  }
+
+  const signatureCanvas = await toCanvas(signatureElement);
+  const signatureHeight = (signatureCanvas.height * contentWidth) / signatureCanvas.width;
+  if (signatureHeight > 0) {
+    addPageIfNeeded(signatureHeight);
+    const signatureImgData = signatureCanvas.toDataURL('image/png', 1.0);
+    pdf.addImage(signatureImgData, 'PNG', marginX, marginY + headerHeight + lastPageHeightUsed, contentWidth, signatureHeight);
+  }
+
+  // Add footers to all pages
+  for (let i = 1; i <= pageCount; i++) {
+    pdf.setPage(i);
+    pdf.addImage(footerImgData, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight);
   }
 
   pdf.deletePage(1); // Delete the initial blank page

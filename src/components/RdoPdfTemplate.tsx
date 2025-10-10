@@ -181,11 +181,12 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
 
       <div id="rdo-footer" className="absolute bottom-[3mm] left-[3mm] right-[3mm] text-[7pt] border-t-2 pt-1" style={{ borderColor: '#8FAADC' }}>
         <div className="flex justify-between text-center">
-          <div>
+          <div className="px-2">
             <p className="font-bold">Headquarter | Rio de Janeiro</p>
             <p>Rua Dom Meinrado, 35 - São Cristóvão</p>
-            <p>Rio de Janeiro - RJ - Brasil - CEP: 20.910-100</p>
-            <p>Tel: (+55 21) 2596-6262</p>
+            <p>Rio de Janeiro - RJ - Brasil</p>
+            <p>CEP: 20.910-100</p>
+            <p>Tel.: (+55 21) 2596-6262</p>
           </div>
           <div className="px-2" style={{ borderLeft: '1px dashed black' }}>
             <p className="font-bold">Base Operacional | Rio das Ostras</p>

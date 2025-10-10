@@ -64,6 +64,7 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
 
   let contentProcessedY = 0;
   let pageCount = 0;
+  let lastPageHeightUsed = 0;
 
   while (contentProcessedY < flowableContentTotalHeight) {
     pageCount++;
@@ -72,6 +73,7 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
 
     const cropY = contentProcessedY;
     const cropHeight = Math.min(flowableContentTotalHeight - contentProcessedY, availablePageHeight);
+    lastPageHeightUsed = cropHeight; // Update height used on the current last page
 
     const pageCanvas = document.createElement('canvas');
     pageCanvas.width = flowable1Canvas.width;
@@ -91,30 +93,25 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
     }
 
     contentProcessedY += cropHeight;
+    pdf.addImage(footerImgData, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight);
   }
 
   if (pageCount === 0) {
     pageCount++;
     pdf.addPage();
     pdf.addImage(headerImgData, 'PNG', marginX, marginY, contentWidth, headerHeight);
+    pdf.addImage(footerImgData, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight);
+    lastPageHeightUsed = 0;
   }
-
-  // Calculate remaining space on the last page
-  let lastPageHeightUsed = (flowableContentTotalHeight % availablePageHeight === 0 && flowableContentTotalHeight > 0)
-    ? availablePageHeight
-    : flowableContentTotalHeight % availablePageHeight;
 
   // Function to add a new page if needed
   const addPageIfNeeded = (contentHeight) => {
     const spaceLeft = availablePageHeight - lastPageHeightUsed;
     if (contentHeight > spaceLeft) {
-      // Add footer to the current page before creating a new one
-      pdf.setPage(pageCount);
-      pdf.addImage(footerImgData, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight);
-
       pageCount++;
       pdf.addPage();
       pdf.addImage(headerImgData, 'PNG', marginX, marginY, contentWidth, headerHeight);
+      pdf.addImage(footerImgData, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight);
       lastPageHeightUsed = 0;
     }
   };
@@ -125,6 +122,7 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
   if (serviceReportHeight > 0) {
     addPageIfNeeded(serviceReportHeight);
     const serviceReportImgData = serviceReportCanvas.toDataURL('image/png', 1.0);
+    pdf.setPage(pageCount);
     pdf.addImage(serviceReportImgData, 'PNG', marginX, marginY + headerHeight + lastPageHeightUsed, contentWidth, serviceReportHeight);
     lastPageHeightUsed += serviceReportHeight;
   }
@@ -134,13 +132,8 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
   if (signatureHeight > 0) {
     addPageIfNeeded(signatureHeight);
     const signatureImgData = signatureCanvas.toDataURL('image/png', 1.0);
+    pdf.setPage(pageCount);
     pdf.addImage(signatureImgData, 'PNG', marginX, marginY + headerHeight + lastPageHeightUsed, contentWidth, signatureHeight);
-  }
-
-  // Add footers to all pages
-  for (let i = 1; i <= pageCount; i++) {
-    pdf.setPage(i);
-    pdf.addImage(footerImgData, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight);
   }
 
   pdf.deletePage(1); // Delete the initial blank page

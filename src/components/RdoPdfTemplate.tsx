@@ -182,8 +182,35 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
       </div>
 
       {/* Footer Section */}
-      <div id="rdo-footer" className="absolute bottom-[3mm] left-[3mm] right-[3mm] text-[6pt] border-t-2 pt-1" style={{ borderColor: '#8FAADC' }}>
-        {/* ... footer content ... */}
+      <div id="rdo-footer" className="absolute bottom-[3mm] left-[3mm] right-[3mm] text-[7pt] border-t-2 pt-1" style={{ borderColor: '#8FAADC' }}>
+        <div className="flex justify-between text-center">
+          <div>
+            <p className="font-bold">Headquarter | Rio de Janeiro</p>
+            <p>Rua Dom Meinrado, 35 - São Cristóvão</p>
+            <p>Rio de Janeiro - RJ - Brasil - CEP: 20.910-100</p>
+            <p>Tel: (+55 21) 2596-6262</p>
+          </div>
+          <div>
+            <p className="font-bold">Base Operacional | Rio das Ostras</p>
+            <p>Rodovia Amaral Peixoto, Km 160</p>
+            <p>Lote 95 A - Mar do Norte - Rio das Ostras - RJ - Brasil</p>
+            <p>CEP: 28.898-000</p>
+          </div>
+          <div>
+            <p className="font-bold">Base Operacional | Porto do Açu</p>
+            <p>Via 5 Projetada, Lote A12 -</p>
+            <p>Distrito Industrial - São João da Barra - RJ - Brasil</p>
+            <p>CEP: 28.200-000</p>
+          </div>
+          <div className="text-right">
+            <p>Tel: (+55 21) 2596-6262</p>
+            <p>contato@supplymarine.com.br</p>
+            <p>supplymarine.com.br</p>
+            <p>Supply marine Serviços Ltda</p>
+            <p>CNPJ: 03.513.274/0001-95</p>
+            <p>I.E.: 77.009.817</p>
+          </div>
+        </div>
       </div>
     </div>
   );

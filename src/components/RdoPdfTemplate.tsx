@@ -182,32 +182,35 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
       </div>
 
       {/* Footer Section */}
-      <div id="rdo-footer" className="absolute bottom-[3mm] left-[3mm] right-[3mm] text-[7pt] border-t-2 pt-1" style={{ borderColor: '#8FAADC' }}>
-        <div className="flex justify-between text-center">
-          <div>
+      <div id="rdo-footer" className="absolute bottom-[3mm] left-[3mm] right-[3mm] text-[6pt] pt-1">
+        <div className="flex justify-around text-center" style={{ borderTop: '2px solid #8FAADC' }}>
+          <div className="px-2">
             <p className="font-bold">Headquarter | Rio de Janeiro</p>
             <p>Rua Dom Meinrado, 35 - São Cristóvão</p>
-            <p>Rio de Janeiro - RJ - Brasil - CEP: 20.910-100</p>
-            <p>Tel: (+55 21) 2596-6262</p>
+            <p>Rio de Janeiro - RJ - Brasil</p>
+            <p>CEP: 20.910-100</p>
+            <p>Tel.: (+55 21) 2596-6262</p>
           </div>
-          <div>
+          <div className="px-2" style={{ borderLeft: '1px dashed black' }}>
             <p className="font-bold">Base Operacional | Rio das Ostras</p>
-            <p>Rodovia Amaral Peixoto, Km 160</p>
-            <p>Lote 95 A - Mar do Norte - Rio das Ostras - RJ - Brasil</p>
+            <p>Rodovia Amaral Peixoto, km 160</p>
+            <p>Lote 95-A - Mar do Norte</p>
+            <p>Rio das Ostras - RJ - Brasil</p>
             <p>CEP: 28.898-000</p>
           </div>
-          <div>
+          <div className="px-2" style={{ borderLeft: '1px dashed black' }}>
             <p className="font-bold">Base Operacional | Porto do Açu</p>
             <p>Via 5 Projetada, Lote A12 -</p>
-            <p>Distrito Industrial - São João da Barra - RJ - Brasil</p>
-            <p>CEP: 28.200-000</p>
+            <p>Distrito Industrial - São João da Barra - RJ</p>
+            <p>Brasil - CEP: 28.200-000</p>
           </div>
-          <div className="text-right">
-            <p>Tel: (+55 21) 2596-6262</p>
+          <div className="px-2" style={{ borderLeft: '1px dashed black' }}>
+            <p>Tel.: (+55 21) 2596-6262</p>
             <p>contato@supplymarine.com.br</p>
             <p>supplymarine.com.br</p>
+            <hr className="my-1" style={{ borderColor: 'black' }} />
             <p>Supply marine Serviços Ltda</p>
-            <p>CNPJ: 03.513.274/0001-95</p>
+            <p>CNPJ: 03.513.224/0001-95</p>
             <p>I.E.: 77.009.817</p>
           </div>
         </div>

@@ -116,8 +116,8 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
     // Overlap: create a new page for the signature.
     pdf.addPage();
     pdf.addImage(headerImgData, 'PNG', marginX, marginY, contentWidth, headerHeight);
-    // Place the signature at the top of the new page, after the header.
-    pdf.addImage(signatureImgData, 'PNG', marginX, marginY + headerHeight + 5, contentWidth, signatureHeight);
+    // Place the signature at the same fixed Y position on the new page.
+    pdf.addImage(signatureImgData, 'PNG', marginX, signatureY, contentWidth, signatureHeight);
     pdf.addImage(footerImgData, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight);
   } else {
     // No overlap: add the signature to the last page at the calculated fixed position.

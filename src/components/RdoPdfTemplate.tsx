@@ -124,6 +124,7 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
           </table>
         </div>
 
+        {/* Service Report Block - This is now a single unbreakable block */}
         <div id="rdo-service-report-block">
             <table className="w-full border-collapse border-black mt-2">
                 <thead>

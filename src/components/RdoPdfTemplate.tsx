@@ -141,21 +141,23 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
                 <tbody>
                     <tr>
                         <td colSpan={4} className="border border-l border-r border-b border-black p-1 align-top">
-                            <div className="whitespace-pre-wrap">{val(formData.serviceReport)}</div>
-                            {previewImages.length > 0 && (
-                                <div className="mt-4 flex flex-wrap justify-around">
-                                    {previewImages.map((src, index) => (
-                                        <div key={index} className="text-center p-1" style={{ maxWidth: '18%' }}>
-                                            <img
-                                                src={src}
-                                                alt={`Foto ${index + 1}`}
-                                                className="w-full h-auto border border-black"
-                                            />
-                                            <p className="text-[7pt] font-bold mt-1">Foto {index + 1}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
+                            <div className="p-1">
+                                <div className="whitespace-pre-wrap">{val(formData.serviceReport)}</div>
+                                {previewImages.length > 0 && (
+                                    <div className="mt-4 flex flex-wrap justify-around">
+                                        {previewImages.map((src, index) => (
+                                            <div key={index} className="text-center p-1" style={{ maxWidth: '18%' }}>
+                                                <img
+                                                    src={src}
+                                                    alt={`Foto ${index + 1}`}
+                                                    className="w-full h-auto border border-black"
+                                                />
+                                                <p className="text-[7pt] font-bold mt-1">Foto {index + 1}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </td>
                     </tr>
                 </tbody>

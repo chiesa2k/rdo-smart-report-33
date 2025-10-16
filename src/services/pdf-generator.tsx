@@ -22,31 +22,32 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
   const photoPreviews = await Promise.all(draftData.photos.map(readAsDataURL));
   const root = createRoot(container);
 
-  // Render the component. The second argument callback is deprecated in React 18.
   root.render(<RdoPdfTemplate formData={draftData} previewImages={photoPreviews} />);
 
-  // We must await a timeout to allow React to render and the browser to paint/load images
   await new Promise(resolve => setTimeout(resolve, 1500));
 
   const pdf = new jsPDF('p', 'mm', 'a4');
 
-  // Select all parts from the top-level container to ensure they are all found
+  // Select all parts from the top-level container
   const headerElement = container.querySelector('#rdo-header') as HTMLElement;
-  const mainContentElement = container.querySelector('#rdo-main-content') as HTMLElement;
+  const flowableContent1Element = container.querySelector('#rdo-flowable-content-1') as HTMLElement;
+  const serviceReportBlockElement = container.querySelector('#rdo-service-report-block') as HTMLElement;
   const signatureElement = container.querySelector('#rdo-signatures') as HTMLElement;
   const footerElement = container.querySelector('#rdo-footer') as HTMLElement;
 
-  if (!headerElement || !mainContentElement || !signatureElement || !footerElement) {
+  if (!headerElement || !flowableContent1Element || !serviceReportBlockElement || !signatureElement || !footerElement) {
     throw new Error("Could not find all required elements in the PDF template.");
   }
 
   const pageWidth = 210;
   const pageHeight = 297;
-  const margin = 15;
-  const contentWidth = pageWidth - (margin * 2);
+  const marginX = 3;
+  const marginY = 3;
+  const contentWidth = pageWidth - (marginX * 2);
 
   const toCanvas = (el: HTMLElement) => html2canvas(el, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: null });
 
+  // Common elements
   const headerCanvas = await toCanvas(headerElement);
   const headerImgData = headerCanvas.toDataURL('image/png', 1.0);
   const headerHeight = (headerCanvas.height * contentWidth) / headerCanvas.width;
@@ -55,64 +56,87 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
   const footerImgData = footerCanvas.toDataURL('image/png', 1.0);
   const footerHeight = (footerCanvas.height * pageWidth) / footerCanvas.width;
 
-  const signatureCanvas = await toCanvas(signatureElement);
-  const signatureImgData = signatureCanvas.toDataURL('image/png', 1.0);
-  const signatureHeight = (signatureCanvas.height * contentWidth) / signatureCanvas.width;
+  const availablePageHeight = pageHeight - headerHeight - footerHeight - (marginY * 2);
 
-  const mainCanvas = await toCanvas(mainContentElement);
-  const mainContentTotalHeight = (mainCanvas.height * contentWidth) / mainCanvas.width;
-
-  // Legacy behavior: photos are part of the main content canvas
-
-  const availablePageHeight = pageHeight - headerHeight - footerHeight - (margin * 2);
+  // Process flowable content
+  const flowable1Canvas = await toCanvas(flowableContent1Element);
+  const flowableContentTotalHeight = (flowable1Canvas.height * contentWidth) / flowable1Canvas.width;
 
   let contentProcessedY = 0;
   let pageCount = 0;
+  let lastPageHeightUsed = 0;
 
-  while (contentProcessedY < mainContentTotalHeight) {
+  while (contentProcessedY < flowableContentTotalHeight) {
     pageCount++;
     pdf.addPage();
-    pdf.addImage(headerImgData, 'PNG', margin, margin, contentWidth, headerHeight);
+    pdf.addImage(headerImgData, 'PNG', marginX, marginY, contentWidth, headerHeight);
 
     const cropY = contentProcessedY;
-    const cropHeight = Math.min(mainContentTotalHeight - contentProcessedY, availablePageHeight);
+    const cropHeight = Math.min(flowableContentTotalHeight - contentProcessedY, availablePageHeight);
+    lastPageHeightUsed = cropHeight; // Update height used on the current last page
 
     const pageCanvas = document.createElement('canvas');
-    pageCanvas.width = mainCanvas.width;
-    pageCanvas.height = (cropHeight * mainCanvas.width) / contentWidth;
+    pageCanvas.width = flowable1Canvas.width;
+    pageCanvas.height = (cropHeight * flowable1Canvas.width) / contentWidth;
     const pageCtx = pageCanvas.getContext('2d');
 
     if (pageCtx) {
       pageCtx.drawImage(
-        mainCanvas,
-        0, (cropY * mainCanvas.width) / contentWidth,
-        mainCanvas.width, pageCanvas.height,
+        flowable1Canvas,
+        0, (cropY * flowable1Canvas.width) / contentWidth,
+        flowable1Canvas.width, pageCanvas.height,
         0, 0,
         pageCanvas.width, pageCanvas.height
       );
       const pageImgData = pageCanvas.toDataURL('image/png', 1.0);
-      pdf.addImage(pageImgData, 'PNG', margin, margin + headerHeight, contentWidth, cropHeight);
+      pdf.addImage(pageImgData, 'PNG', marginX, marginY + headerHeight, contentWidth, cropHeight);
     }
 
     contentProcessedY += cropHeight;
     pdf.addImage(footerImgData, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight);
   }
 
-  pdf.deletePage(1);
-
-  const lastPageContentHeight = (contentProcessedY > availablePageHeight) ? (contentProcessedY % availablePageHeight) : contentProcessedY;
-  const spaceLeftOnLastPage = availablePageHeight - lastPageContentHeight;
-
-  pdf.setPage(pageCount);
-
-  if (spaceLeftOnLastPage > signatureHeight + 5) {
-    pdf.addImage(signatureImgData, 'PNG', margin, margin + headerHeight + lastPageContentHeight + 5, contentWidth, signatureHeight);
-  } else {
+  if (pageCount === 0) {
+    pageCount++;
     pdf.addPage();
-    pdf.addImage(headerImgData, 'PNG', margin, margin, contentWidth, headerHeight);
-    pdf.addImage(signatureImgData, 'PNG', margin, margin + headerHeight + 5, contentWidth, signatureHeight);
+    pdf.addImage(headerImgData, 'PNG', marginX, marginY, contentWidth, headerHeight);
     pdf.addImage(footerImgData, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight);
+    lastPageHeightUsed = 0;
   }
+
+  // Function to add a new page if needed
+  const addPageIfNeeded = (contentHeight) => {
+    const spaceLeft = availablePageHeight - lastPageHeightUsed;
+    if (contentHeight > spaceLeft) {
+      pageCount++;
+      pdf.addPage();
+      pdf.addImage(headerImgData, 'PNG', marginX, marginY, contentWidth, headerHeight);
+      pdf.addImage(footerImgData, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight);
+      lastPageHeightUsed = 0;
+    }
+  };
+
+  // Add unbreakable blocks
+  const serviceReportCanvas = await toCanvas(serviceReportBlockElement);
+  const serviceReportHeight = (serviceReportCanvas.height * contentWidth) / serviceReportCanvas.width;
+  if (serviceReportHeight > 0) {
+    addPageIfNeeded(serviceReportHeight);
+    const serviceReportImgData = serviceReportCanvas.toDataURL('image/png', 1.0);
+    pdf.setPage(pageCount);
+    pdf.addImage(serviceReportImgData, 'PNG', marginX, marginY + headerHeight + lastPageHeightUsed, contentWidth, serviceReportHeight);
+    lastPageHeightUsed += serviceReportHeight;
+  }
+
+  const signatureCanvas = await toCanvas(signatureElement);
+  const signatureHeight = (signatureCanvas.height * contentWidth) / signatureCanvas.width;
+  if (signatureHeight > 0) {
+    addPageIfNeeded(signatureHeight);
+    const signatureImgData = signatureCanvas.toDataURL('image/png', 1.0);
+    pdf.setPage(pageCount);
+    pdf.addImage(signatureImgData, 'PNG', marginX, marginY + headerHeight + lastPageHeightUsed, contentWidth, signatureHeight);
+  }
+
+  pdf.deletePage(1); // Delete the initial blank page
 
   root.unmount();
   document.body.removeChild(container);

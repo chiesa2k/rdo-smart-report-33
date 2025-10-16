@@ -124,44 +124,59 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
           </table>
         </div>
 
-        {/* Service Report Block - This is now a single unbreakable block */}
-        <div id="rdo-service-report-block">
-            <table className="w-full border-collapse border-black mt-2">
-                <thead>
-                    <tr className="text-center font-bold" style={{ backgroundColor: '#D9E2F3' }}>
-                        <td colSpan={4} className="border border-t border-l border-r border-black p-1">Relatório de Serviço / Service Report</td>
-                    </tr>
-                    <tr className="text-center font-bold text-[7pt]" style={{ backgroundColor: '#D9E2F3' }}>
-                        <td className="border border-t border-l border-r border-black p-1 w-1/4">(1) Descrição da Avaria / Damage Description</td>
-                        <td className="border border-t border-l border-r border-black p-1 w-1/4">(2) Trabalho Executado / Executed Work</td>
-                        <td className="border border-t border-l border-r border-black p-1 w-1/4">(3) Informações Adicionais / Additional Info</td>
-                        <td className="border border-t border-l border-r border-black p-1 w-1/4">(4) Comentários do Cliente / Customer's Comments</td>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td colSpan={4} className="border border-l border-r border-b border-black p-1 align-top">
-                            <div className="p-1">
-                                <div className="whitespace-pre-wrap">{val(formData.serviceReport)}</div>
-                                {previewImages.length > 0 && (
-                                    <div className="mt-4 flex flex-wrap justify-around">
-                                        {previewImages.map((src, index) => (
-                                            <div key={index} className="text-center p-1" style={{ maxWidth: '18%' }}>
-                                                <img
-                                                    src={src}
-                                                    alt={`Foto ${index + 1}`}
-                                                    className="w-full h-auto border border-black"
-                                                />
-                                                <p className="text-[7pt] font-bold mt-1">Foto {index + 1}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+        {/* Service Report Section */}
+        <div id="rdo-service-report">
+          <table className="w-full border-collapse border-black mt-2">
+            <thead>
+              <tr className="text-center font-bold" style={{ backgroundColor: '#D9E2F3' }}>
+                <td colSpan={4} className="border border-t border-l border-r border-black p-1">Relatório de Serviço / Service Report</td>
+              </tr>
+              <tr className="text-center font-bold text-[7pt]" style={{ backgroundColor: '#D9E2F3' }}>
+                <td className="border border-t border-l border-r border-black p-1 w-1/4">(1) Descrição da Avaria / Damage Description</td>
+                <td className="border border-t border-l border-r border-black p-1 w-1/4">(2) Trabalho Executado / Executed Work</td>
+                <td className="border border-t border-l border-r border-black p-1 w-1/4">(3) Informações Adicionais / Additional Info</td>
+                <td className="border border-t border-l border-r border-black p-1 w-1/4">(4) Comentários do Cliente / Customer's Comments</td>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colSpan={4} className="border border-l border-r border-b border-black p-1 align-top h-[60mm]">
+                  <div className="whitespace-pre-wrap">{val(formData.serviceReport)}</div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {/* Photographic Evidence Section */}
+        <div id="rdo-photographic-evidence">
+          <table className="w-full border-collapse border-black mt-2">
+            <thead>
+              <tr className="text-center font-bold" style={{ backgroundColor: '#D9E2F3' }}>
+                <td className="border border-t border-l border-r border-black p-1">(3) Evidências fotográficas</td>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="border border-l border-r border-b border-black p-1">
+                  {previewImages.length > 0 && (
+                    <div className="flex flex-wrap justify-around">
+                      {previewImages.map((src, index) => (
+                        <div key={index} className="text-center p-1" style={{ maxWidth: '18%' }}>
+                          <img
+                            src={src}
+                            alt={`Foto ${index + 1}`}
+                            className="w-full h-auto border border-black"
+                          />
+                          <p className="text-[7pt] font-bold mt-1">Foto {index + 1}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
         <div id="rdo-signatures" className="pt-2">

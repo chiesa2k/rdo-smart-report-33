@@ -31,12 +31,11 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
   // Select all parts from the top-level container
   const headerElement = container.querySelector('#rdo-header') as HTMLElement;
   const flowableContent1Element = container.querySelector('#rdo-flowable-content-1') as HTMLElement;
-  const serviceReportElement = container.querySelector('#rdo-service-report') as HTMLElement;
-  const photographicEvidenceElement = container.querySelector('#rdo-photographic-evidence') as HTMLElement;
+  const serviceReportBlockElement = container.querySelector('#rdo-service-report-block') as HTMLElement;
   const signatureElement = container.querySelector('#rdo-signatures') as HTMLElement;
   const footerElement = container.querySelector('#rdo-footer') as HTMLElement;
 
-  if (!headerElement || !flowableContent1Element || !serviceReportElement || !photographicEvidenceElement || !signatureElement || !footerElement) {
+  if (!headerElement || !flowableContent1Element || !serviceReportBlockElement || !signatureElement || !footerElement) {
     throw new Error("Could not find all required elements in the PDF template.");
   }
 
@@ -59,19 +58,9 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
 
   const availablePageHeight = pageHeight - headerHeight - footerHeight - (marginY * 2);
 
-  // Combine and process all flowable content
+  // Process flowable content
   const flowable1Canvas = await toCanvas(flowableContent1Element);
-  const serviceReportCanvas = await toCanvas(serviceReportElement);
-  const combinedFlowableCanvas = document.createElement('canvas');
-  combinedFlowableCanvas.width = flowable1Canvas.width;
-  combinedFlowableCanvas.height = flowable1Canvas.height + serviceReportCanvas.height;
-  const ctx = combinedFlowableCanvas.getContext('2d');
-  if (ctx) {
-    ctx.drawImage(flowable1Canvas, 0, 0);
-    ctx.drawImage(serviceReportCanvas, 0, flowable1Canvas.height);
-  }
-
-  const flowableContentTotalHeight = (combinedFlowableCanvas.height * contentWidth) / combinedFlowableCanvas.width;
+  const flowableContentTotalHeight = (flowable1Canvas.height * contentWidth) / flowable1Canvas.width;
 
   let contentProcessedY = 0;
   let pageCount = 0;
@@ -87,15 +76,15 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
     lastPageHeightUsed = cropHeight;
 
     const pageCanvas = document.createElement('canvas');
-    pageCanvas.width = combinedFlowableCanvas.width;
-    pageCanvas.height = (cropHeight * combinedFlowableCanvas.width) / contentWidth;
+    pageCanvas.width = flowable1Canvas.width;
+    pageCanvas.height = (cropHeight * flowable1Canvas.width) / contentWidth;
     const pageCtx = pageCanvas.getContext('2d');
 
     if (pageCtx) {
       pageCtx.drawImage(
-        combinedFlowableCanvas,
-        0, (cropY * combinedFlowableCanvas.width) / contentWidth,
-        combinedFlowableCanvas.width, pageCanvas.height,
+        flowable1Canvas,
+        0, (cropY * flowable1Canvas.width) / contentWidth,
+        flowable1Canvas.width, pageCanvas.height,
         0, 0,
         pageCanvas.width, pageCanvas.height
       );
@@ -126,15 +115,6 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
     }
   };
 
-  const photoCanvas = await toCanvas(photographicEvidenceElement);
-  const photoHeight = (photoCanvas.height * contentWidth) / photoCanvas.width;
-  if (photoHeight > 0) {
-    addPageIfNeeded(photoHeight);
-    const photoImgData = photoCanvas.toDataURL('image/png', 1.0);
-    pdf.setPage(pageCount);
-    pdf.addImage(photoImgData, 'PNG', marginX, marginY + headerHeight + lastPageHeightUsed, contentWidth, photoHeight);
-    lastPageHeightUsed += photoHeight;
-  }
 
   const signatureCanvas = await toCanvas(signatureElement);
   const signatureHeight = (signatureCanvas.height * contentWidth) / signatureCanvas.width;

@@ -28,7 +28,7 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
 
   // 2. Define PDF geometry and constants
   const pdf = new jsPDF('p', 'mm', 'a4');
-  pdf.deletePage(1); // Start with a clean slate, not the default blank page
+  // Do NOT delete the first page. We will use it as the starting page.
 
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
@@ -69,9 +69,16 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
 
   // 4. Single-pass rendering algorithm
   let currentY = 0;
+  let isFirstPage = true;
 
   const startNewPage = () => {
-    pdf.addPage();
+    if (isFirstPage) {
+      // Use the existing first page
+      pdf.setPage(1);
+      isFirstPage = false;
+    } else {
+      pdf.addPage();
+    }
     pdf.addImage(headerImg, 'PNG', margin, margin, contentWidth, headerHeight);
     currentY = margin + headerHeight;
   };

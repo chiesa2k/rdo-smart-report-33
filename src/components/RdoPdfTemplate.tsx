@@ -124,46 +124,51 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
           </table>
         </div>
 
-        {/* Service Report and Photographic Evidence Section */}
-        <div id="rdo-service-report-block">
-          <table className="w-full border-collapse border-black mt-2">
-            <thead>
-              <tr className="text-center font-bold" style={{ backgroundColor: '#D9E2F3' }}>
-                <td colSpan={4} className="border border-t border-l border-r border-black p-1">Relatório de Serviço / Service Report</td>
-              </tr>
-              <tr className="text-center font-bold text-[7pt]" style={{ backgroundColor: '#D9E2F3' }}>
-                <td className="border border-t border-l border-r border-black p-1 w-1/4">(1) Descrição da Avaria / Damage Description</td>
-                <td className="border border-t border-l border-r border-black p-1 w-1/4">(2) Trabalho Executado / Executed Work</td>
-                <td className="border border-t border-l border-r border-black p-1 w-1/4">(3) Informações Adicionais / Additional Info</td>
-                <td className="border border-t border-l border-r border-black p-1 w-1/4">(4) Comentários do Cliente / Customer's Comments</td>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td colSpan={4} className="border border-l border-r border-b border-black p-1 align-top">
-                  <div className="whitespace-pre-wrap h-[60mm]">{val(formData.serviceReport)}</div>
+        {/* Service Report and Photographic Evidence Section (using divs for better canvas rendering) */}
+        <div id="rdo-service-report-block" className="border border-black mt-2">
+          {/* Main Header */}
+          <div className="text-center font-bold p-1" style={{ backgroundColor: '#D9E2F3' }}>
+            Relatório de Serviço / Service Report
+          </div>
 
-                  <div className="mt-2">
-                    <h3 className="text-center font-bold text-[7pt] p-1" style={{ backgroundColor: '#D9E2F3' }}>(3) Evidências fotográficas</h3>
-                    {previewImages.length > 0 && (
-                      <div className="flex flex-wrap justify-around p-1">
-                        {previewImages.map((src, index) => (
-                          <div key={index} className="text-center p-1" style={{ maxWidth: '18%' }}>
-                            <img
-                              src={src}
-                              alt={`Foto ${index + 1}`}
-                              className="w-full h-auto border border-black"
-                            />
-                            <p className="text-[7pt] font-bold mt-1">Foto {index + 1}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          {/* Text Report Section */}
+          <div className="border-t border-black">
+            <div className="flex text-center font-bold text-[7pt]" style={{ backgroundColor: '#D9E2F3' }}>
+              <div className="p-1 w-1/4 border-r border-black">(1) Descrição da Avaria / Damage Description</div>
+              <div className="p-1 w-1/4 border-r border-black">(2) Trabalho Executado / Executed Work</div>
+              <div className="p-1 w-1/4 border-r border-black">(3) Informações Adicionais / Additional Info</div>
+              <div className="p-1 w-1/4">(4) Comentários do Cliente / Customer's Comments</div>
+            </div>
+            <div className="border-t border-black p-1 align-top min-h-[40mm]">
+              <div className="whitespace-pre-wrap">{val(formData.serviceReport)}</div>
+            </div>
+          </div>
+
+          {/* Photo Evidence Section */}
+          <div className="border-t border-black">
+            <div className="text-center font-bold p-1" style={{ backgroundColor: '#D9E2F3' }}>
+              Evidências Fotográficas / Photographic Evidence
+            </div>
+            <div className="p-1">
+              {previewImages.length > 0 ? (
+                <div className="flex flex-wrap justify-around p-1">
+                  {previewImages.map((src, index) => (
+                    <div key={index} className="text-center p-1" style={{ maxWidth: '18%' }}>
+                      <img
+                        src={src}
+                        alt={`Foto ${index + 1}`}
+                        className="w-full h-auto border border-black"
+                        crossOrigin="anonymous"
+                      />
+                      <p className="text-[7pt] font-bold mt-1">Foto {index + 1}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center p-2 text-gray-500">Sem evidências fotográficas.</div>
+              )}
+            </div>
+          </div>
         </div>
 
         <div id="rdo-signatures" className="pt-2">

@@ -140,16 +140,18 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
   }
 
   // --- Final Step: Add Signatures and Footer ---
-  const spaceLeftOnFinalPage = pageHeight - margin - currentY - footerHeight;
+  let signaturesY = pageHeight - footerHeight - signaturesHeight - margin;
 
-  // If signatures don't fit, or if there's a large gap, create a new page for them.
-  if (signaturesHeight > spaceLeftOnFinalPage + 0.1) {
-    pdf.addImage(footerImg, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight); // Footer on the previous page
-    startNewPage(); // This creates a new page and sets currentY
+  // Check if the content has flowed past the point where signatures should start.
+  if (currentY > signaturesY) {
+    // If so, add the footer to the current page and start a new one for the signatures.
+    pdf.addImage(footerImg, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight);
+    startNewPage();
+    // Recalculate Y position for the new page.
+    signaturesY = pageHeight - footerHeight - signaturesHeight - margin;
   }
 
-  // Place signatures at the bottom, just above the footer
-  const signaturesY = pageHeight - footerHeight - signaturesHeight - margin;
+  // Place signatures at the calculated position.
   const signaturesImg = signaturesCanvas.toDataURL('image/png', 1.0);
   pdf.addImage(signaturesImg, 'PNG', margin, signaturesY, contentWidth, signaturesHeight);
 

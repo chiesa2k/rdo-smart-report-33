@@ -145,7 +145,7 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
           </div>
 
           {/* Photo Evidence Section */}
-          <div className="p-1 border-t border-black">
+          <div className="pt-2 p-1">
             {previewImages.length > 0 ? (
               <div className="flex flex-wrap justify-around p-1">
                 {previewImages.map((src, index) => (

@@ -125,7 +125,7 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
         </div>
 
         {/* Service Report and Photographic Evidence Section (using divs for better canvas rendering) */}
-        <div id="rdo-service-report-block" className="border border-black mt-2">
+        <div id="rdo-service-report-block" className="border-t border-l border-r border-b border-black mt-2">
           {/* Main Header */}
           <div className="text-center font-bold p-1" style={{ backgroundColor: '#D9E2F3' }}>
             Relatório de Serviço / Service Report

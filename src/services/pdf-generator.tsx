@@ -153,14 +153,7 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
   const signaturesImg = signaturesCanvas.toDataURL('image/png', 1.0);
   pdf.addImage(signaturesImg, 'PNG', margin, signaturesY, contentWidth, signaturesHeight);
 
-  // Draw connecting lines if the service report and signatures are on the same page
-  if (serviceReportEndY > 0 && serviceReportEndY < signaturesY) {
-    pdf.setDrawColor(0, 0, 0); // Black color for the lines
-    // Left line
-    pdf.line(margin, serviceReportEndY, margin, signaturesY);
-    // Right line
-    pdf.line(pageWidth - margin, serviceReportEndY, pageWidth - margin, signaturesY);
-  }
+  // The bottom border is now part of the component's CSS, so no manual drawing is needed.
 
   // Add footer to the final page
   pdf.addImage(footerImg, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight);

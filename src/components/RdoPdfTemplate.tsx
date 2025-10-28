@@ -145,29 +145,24 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
           </div>
 
           {/* Photo Evidence Section */}
-          <div>
-            <div className="text-center font-bold p-1 border-t border-black" style={{ backgroundColor: '#D9E2F3' }}>
-              Evidências Fotográficas / Photographic Evidence
-            </div>
-            <div className="p-1">
-              {previewImages.length > 0 ? (
-                <div className="flex flex-wrap justify-around p-1">
-                  {previewImages.map((src, index) => (
-                    <div key={index} className="text-center p-1" style={{ maxWidth: '18%' }}>
-                      <img
-                        src={src}
-                        alt={`Foto ${index + 1}`}
-                        className="w-full h-auto border border-black"
-                        crossOrigin="anonymous"
-                      />
-                      <p className="text-[7pt] font-bold mt-1">Foto {index + 1}</p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center p-2 text-gray-500">Sem evidências fotográficas.</div>
-              )}
-            </div>
+          <div className="p-1 border-t border-black">
+            {previewImages.length > 0 ? (
+              <div className="flex flex-wrap justify-around p-1">
+                {previewImages.map((src, index) => (
+                  <div key={index} className="text-center p-1" style={{ maxWidth: '18%' }}>
+                    <img
+                      src={src}
+                      alt={`Foto ${index + 1}`}
+                      className="w-full h-auto border border-black"
+                      crossOrigin="anonymous"
+                    />
+                    <p className="text-[7pt] font-bold mt-1">Foto {index + 1}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center p-2 text-gray-500">Sem evidências fotográficas.</div>
+            )}
           </div>
         </div>
 

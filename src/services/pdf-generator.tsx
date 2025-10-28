@@ -62,14 +62,17 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
 
   // Define the content blocks and their properties (e.g., if they can be split)
   const contentBlocks = [
-    { canvas: content1Canvas, breakable: true },
-    { canvas: serviceReportCanvas, breakable: false },
-    { canvas: signaturesCanvas, breakable: false },
+    { id: 'content1', canvas: content1Canvas, breakable: true },
+    { id: 'serviceReport', canvas: serviceReportCanvas, breakable: false },
+    // Signatures are handled separately to fix them at the bottom
   ];
+
+  const signaturesHeight = (signaturesCanvas.height * contentWidth) / signaturesCanvas.width;
 
   // 4. Single-pass rendering algorithm
   let currentY = 0;
   let isFirstPage = true;
+  let serviceReportEndY = 0; // Variable to store the bottom position of the service report
 
   const startNewPage = () => {
     if (isFirstPage) {
@@ -130,7 +133,33 @@ export const generatePdfBlob = async (draftData: RDOFormData): Promise<Blob> => 
       const blockImg = blockCanvas.toDataURL('image/png', 1.0);
       pdf.addImage(blockImg, 'PNG', margin, currentY, contentWidth, blockHeight);
       currentY += blockHeight;
+      if (block.id === 'serviceReport') {
+        serviceReportEndY = currentY;
+      }
     }
+  }
+
+  // --- Final Step: Add Signatures and Footer ---
+  const spaceLeftOnFinalPage = pageHeight - margin - currentY - footerHeight;
+
+  // If signatures don't fit, or if there's a large gap, create a new page for them.
+  if (signaturesHeight > spaceLeftOnFinalPage + 0.1) {
+    pdf.addImage(footerImg, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight); // Footer on the previous page
+    startNewPage(); // This creates a new page and sets currentY
+  }
+
+  // Place signatures at the bottom, just above the footer
+  const signaturesY = pageHeight - footerHeight - signaturesHeight - margin;
+  const signaturesImg = signaturesCanvas.toDataURL('image/png', 1.0);
+  pdf.addImage(signaturesImg, 'PNG', margin, signaturesY, contentWidth, signaturesHeight);
+
+  // Draw connecting lines if the service report and signatures are on the same page
+  if (serviceReportEndY > 0 && serviceReportEndY < signaturesY) {
+    pdf.setDrawColor(0, 0, 0); // Black color for the lines
+    // Left line
+    pdf.line(margin, serviceReportEndY, margin, signaturesY);
+    // Right line
+    pdf.line(pageWidth - margin, serviceReportEndY, pageWidth - margin, signaturesY);
   }
 
   // Add footer to the final page

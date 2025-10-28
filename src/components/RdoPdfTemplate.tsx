@@ -145,8 +145,8 @@ export const RdoPdfTemplate = ({ formData, previewImages }: RdoPdfTemplateProps)
           </div>
 
           {/* Photo Evidence Section */}
-          <div className="border-t border-black">
-            <div className="text-center font-bold p-1" style={{ backgroundColor: '#D9E2F3' }}>
+          <div>
+            <div className="text-center font-bold p-1 border-t border-black" style={{ backgroundColor: '#D9E2F3' }}>
               Evidências Fotográficas / Photographic Evidence
             </div>
             <div className="p-1">
